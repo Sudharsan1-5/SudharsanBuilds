@@ -24,7 +24,7 @@ export default function Hero() {
           <div className="flex justify-center gap-6 pt-4">
   {/* GitHub */}
   <motion.a
-    href="https://github.com/xiasudharsank-glitch"
+    href=https://github.com/Sudharsan1-5"
     target="_blank"
     rel="noopener noreferrer"
     whileHover={{
@@ -58,7 +58,7 @@ export default function Hero() {
 
   {/* Twitter */}
   <motion.a
-    href="https://twitter.com/YOUR_TWITTER_USERNAME"
+    href="https://x.com/SudharsanBuilds"
     target="_blank"
     rel="noopener noreferrer"
     whileHover={{
@@ -75,7 +75,7 @@ export default function Hero() {
 
   {/* Mail */}
   <motion.a
-    href="mailto:YOUR_EMAIL@example.com"
+    href="#contact"
     whileHover={{
       scale: 1.2,
       rotateY: -15,
