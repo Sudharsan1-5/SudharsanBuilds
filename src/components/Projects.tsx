@@ -31,7 +31,7 @@ export default function Projects() {
       tech: 'React, Real-time DB, Authentication',
       description: 'Community platform with user profiles, posts, comments, and real-time interactions.',
       gradient: 'from-orange-500 to-red-500',
-      image: '/images/social-app.jpg',
+      image: 'https://files.imagetourl.net/uploads/1760358752168-eb843ce2-4540-46f6-b9a1-c6fcc6a4c5cf.jpg',
       link: 'https://your-social-app.com'
     },
     {
