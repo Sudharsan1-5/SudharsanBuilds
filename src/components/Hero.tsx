@@ -1,4 +1,5 @@
 import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
+import { motion } from "framer-motion";
 
 export default function Hero() {
   return (
@@ -21,23 +22,73 @@ export default function Hero() {
           </div>
 
           <div className="flex justify-center gap-6 pt-4">
-            <a href="https://github.com/xiasudharsank-glitch"  target="_blank"
-               rel="noopener noreferrer" className="text-slate-300 hover:text-cyan-400 transition-colors transform hover:scale-110 duration-300">
-              <Github size={28} />
-            </a>
-            <a href="linkedin.com/in/sudharsan-k-2027b1370" 
-               target="_blank"
-               rel="noopener noreferrer"
-               className="text-slate-300 hover:text-cyan-400 transition-colors transform hover:scale-110 duration-300">
-              <Linkedin size={28} />
-            </a>
-            <a href="#" className="text-slate-300 hover:text-cyan-400 transition-colors transform hover:scale-110 duration-300">
-              <Twitter size={28} />
-            </a>
-            <a href="#contact" className="text-slate-300 hover:text-cyan-400 transition-colors transform hover:scale-110 duration-300">
-              <Mail size={28} />
-            </a>
-          </div>
+  {/* GitHub */}
+  <motion.a
+    href="https://github.com/xiasudharsank-glitch"
+    target="_blank"
+    rel="noopener noreferrer"
+    whileHover={{
+      scale: 1.2,
+      rotateY: 15,
+      rotateX: 10,
+      boxShadow: "0px 0px 25px rgba(34,211,238,0.6)", // cyan glow
+    }}
+    transition={{ type: "spring", stiffness: 300 }}
+    className="text-slate-300 hover:text-cyan-400"
+  >
+    <Github size={28} />
+  </motion.a>
+
+  {/* LinkedIn */}
+  <motion.a
+    href="https://linkedin.com/in/sudharsan-k-2027b1370"
+    target="_blank"
+    rel="noopener noreferrer"
+    whileHover={{
+      scale: 1.2,
+      rotateY: -15,
+      rotateX: 10,
+      boxShadow: "0px 0px 25px rgba(0,191,255,0.6)", // blue glow
+    }}
+    transition={{ type: "spring", stiffness: 300 }}
+    className="text-slate-300 hover:text-cyan-400"
+  >
+    <Linkedin size={28} />
+  </motion.a>
+
+  {/* Twitter */}
+  <motion.a
+    href="https://twitter.com/YOUR_TWITTER_USERNAME"
+    target="_blank"
+    rel="noopener noreferrer"
+    whileHover={{
+      scale: 1.2,
+      rotateY: 15,
+      rotateX: -10,
+      boxShadow: "0px 0px 25px rgba(29,155,240,0.6)", // Twitter glow
+    }}
+    transition={{ type: "spring", stiffness: 300 }}
+    className="text-slate-300 hover:text-cyan-400"
+  >
+    <Twitter size={28} />
+  </motion.a>
+
+  {/* Mail */}
+  <motion.a
+    href="mailto:YOUR_EMAIL@example.com"
+    whileHover={{
+      scale: 1.2,
+      rotateY: -15,
+      rotateX: -10,
+      boxShadow: "0px 0px 25px rgba(255,255,255,0.6)", // white glow
+    }}
+    transition={{ type: "spring", stiffness: 300 }}
+    className="text-slate-300 hover:text-cyan-400"
+  >
+    <Mail size={28} />
+  </motion.a>
+</div>
+
 
           <div className="pt-8">
             <a
