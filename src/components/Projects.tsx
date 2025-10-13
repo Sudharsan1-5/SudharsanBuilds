@@ -49,14 +49,6 @@ export default function Projects() {
       gradient: 'from-yellow-500 to-orange-500',
       image: '/images/portfolio.jpg',
       link: 'https://your-portfolio-generator.com'
-    },
-    {
-      titile: 'AI Assistance',
-      tech: 'bolt,supabase,external api',
-      description: 'Automatic lead and proposal generator using job description and fiverr profile',
-      gradient: 'from black-500 to-orange-600',
-      image: 'placeholder'
-      link: 'freelancerassistance.lovable.app'
     }
   ];
 
