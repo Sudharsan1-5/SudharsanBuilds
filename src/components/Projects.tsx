@@ -16,7 +16,7 @@ export default function Projects() {
       description: 'Real-time analytics platform with subscription management and data visualization.',
       gradient: 'from-blue-500 to-cyan-500',
       image: '/images/saas-dashboard.jpg',
-      link: 'https://your-saas-dashboard.com'
+      link: 'freelancerassistance.lovable.app'
     },
     {
       title: 'Booking Management System',
