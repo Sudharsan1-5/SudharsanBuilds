@@ -21,11 +21,13 @@ export default function Hero() {
           </div>
 
           <div className="flex justify-center gap-6 pt-4">
-            <a href="https://github.com/xiasudharsank-glitch" className="text-slate-300 hover:text-cyan-400 transition-colors transform hover:scale-110 duration-300">
+            <a href="https://github.com/xiasudharsank-glitch"  target="_blank"
+               rel="noopener noreferrer" className="text-slate-300 hover:text-cyan-400 transition-colors transform hover:scale-110 duration-300">
               <Github size={28} />
             </a>
             <a href="linkedin.com/in/sudharsan-k-2027b1370" 
                target="_blank"
+               rel="noopener noreferrer"
                className="text-slate-300 hover:text-cyan-400 transition-colors transform hover:scale-110 duration-300">
               <Linkedin size={28} />
             </a>
