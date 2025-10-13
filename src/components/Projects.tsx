@@ -8,7 +8,7 @@ export default function Projects() {
       description: 'Full-featured online store with payment integration, inventory management, and admin dashboard.',
       gradient: 'from-purple-500 to-pink-500',
       image: '/images/ecommerce.jpg', // ← Replace with actual image path
-      link: 'https://your-ecommerce-site.com' // ← Replace with actual URL
+      link: 'https://estorebysudharsan.lovable.app' // ← Replace with actual URL
     },
     {
       title: 'SaaS Analytics Dashboard',
@@ -40,7 +40,7 @@ export default function Projects() {
       description: 'Project management solution with team collaboration and progress tracking features.',
       gradient: 'from-indigo-500 to-purple-500',
       image: '/images/task-tool.jpg',
-      link: 'https://your-task-tool.com'
+      link: 'https://sudharsanchatbot.lovable.app'
     },
     {
       title: 'Portfolio Generator',
