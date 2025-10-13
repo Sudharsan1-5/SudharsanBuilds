@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
+import { Github, Linkedin, Mail, Twitter, Instagram, Facebook } from 'lucide-react';
 import { motion } from "framer-motion";
 
 export default function Hero() {
