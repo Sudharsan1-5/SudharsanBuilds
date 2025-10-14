@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, FC } from 'react';
-import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
+import { Github, Linkedin, Mail, Twitter, Bot } from 'lucide-react';
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
 
 // --- 1. TYPES ---
@@ -250,31 +250,27 @@ const Hero: FC = () => {
             <div className="container mx-auto px-6 relative z-10">
                 <div className="text-center space-y-8 py-20">
                     <div className="space-y-4">
-                        {/* 3D Name Effect: Enhanced mouse reactive rotation with dramatic depth */}
+                       {/* 3. 3D Name Effect: Mouse reactive rotation */}
                         <motion.h1
-                            style={{
-                                rotateX,
-                                rotateY,
-                                transformStyle: "preserve-3d",
-                            }}
-                            className="text-6xl md:text-8xl lg:text-9xl font-extrabold text-white tracking-tighter cursor-default"
+                            style={{ rotateX, rotateY }}
+                            className="text-6xl md:text-8xl lg:text-9xl font-extrabold text-white tracking-tighter cursor-default flex items-center justify-center gap-6" // ADDED FLEX CLASSES
+                            transition={{ type: "spring", stiffness: 100, damping: 20 }}
                         >
+                            {/* NEW: Bot Head Icon */}
+                            <Bot 
+                                size={90} // Large size to fit the H1
+                                className="text-cyan-400 drop-shadow-lg hidden sm:block" // Hidden on tiny screens, added shadow
+                            />
+
                             <span
                                 className="inline-block"
                                 style={{
                                     textShadow: `
-                                        0 0 10px rgba(255, 255, 255, 1),
-                                        0 0 20px rgba(6, 182, 212, 0.8),
-                                        0 5px 0px rgba(0, 0, 0, 0.6),
+                                        0 0 5px rgba(255, 255, 255, 0.8),
                                         0 10px 0px rgba(0, 0, 0, 0.5),
-                                        0 15px 0px rgba(0, 175, 255, 0.5),
                                         0 20px 0px rgba(0, 175, 255, 0.4),
-                                        0 25px 0px rgba(0, 100, 200, 0.3),
-                                        0 30px 5px rgba(0, 0, 0, 0.4),
-                                        0 35px 10px rgba(0, 0, 0, 0.3),
-                                        0 40px 15px rgba(0, 0, 0, 0.2)
-                                    `,
-                                    transform: "translateZ(50px)",
+                                        0 30px 10px rgba(0, 0, 0, 0.3)
+                                    `
                                 }}
                             >
                                 Sudharsan
