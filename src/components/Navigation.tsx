@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Briefcase } from 'lucide-react';
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -38,9 +38,19 @@ export default function Navigation() {
     >
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
-          <a href="#home" className="text-2xl font-bold text-white">
-            <span className="text-cyan-400">Sudharsan</span>Builds
-          </a>
+          
+         <a href="#home" 
+   onClick={scrollToSection} 
+   className="text-2xl font-extrabold text-white flex items-center gap-2 transition duration-300 hover:text-cyan-400"
+>
+    {/* Professional Icon: Briefcase */}
+    <Briefcase className="w-6 h-6 text-cyan-400 transform rotate-[-10deg]" /> 
+    
+    {/* Name: Sudharsan Builds */}
+    <span className="tracking-wide">
+        <span className="text-cyan-400">SUDHARSAN</span> BUILDS
+    </span>
+</a>
 
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
