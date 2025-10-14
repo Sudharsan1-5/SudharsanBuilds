@@ -221,17 +221,6 @@ const Hero: FC = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Scroll Indicator (Position adjusted to bottom-10 for safety) */}
-            <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2">
-                <div className="w-8 h-12 border-2 border-cyan-400/50 rounded-full flex justify-center p-1">
-                    <motion.div
-                        className="w-1.5 h-3 bg-cyan-400 rounded-full"
-                        animate={{ y: [0, 8, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                    ></motion.div>
-                </div>
-            </div>
         </section>
     );
 }
