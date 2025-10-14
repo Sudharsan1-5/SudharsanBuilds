@@ -39,7 +39,7 @@ export default function Navigation() {
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           <a href="#home" className="text-2xl font-bold text-white">
-            <span className="text-cyan-400">Your</span>Name
+            <span className="text-cyan-400">Sudharsan</span>Builds
           </a>
 
           <div className="hidden md:flex items-center gap-8">
