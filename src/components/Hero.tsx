@@ -353,7 +353,7 @@ const Hero: FC = () => {
                             whileTap={{ scale: 0.95 }}
                             transition={{ type: "spring", stiffness: 300 }}
                         >
-                            Start a Project
+                            Hire me
                         </motion.a>
                     </div>
                 </div>
