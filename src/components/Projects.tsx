@@ -6,47 +6,42 @@ export default function Projects() {
       title: 'E-Commerce Platform',
       tech: 'React, Supabase, Stripe',
       description: 'Full-featured online store with payment integration, inventory management, and admin dashboard.',
-      gradient: 'from-purple-500 to-pink-500',
-      image: '/images/ecommerce.jpg', // ← Replace with actual image path
-      link: 'https://estorebysudharsan.lovable.app' // ← Replace with actual URL
+      image: '/assets/projects/ecommerce-screenshot.jpg', // Update with your actual path
+      link: 'https://estorebysudharsan.lovable.app'
     },
     {
       title: 'SaaS Analytics Dashboard',
       tech: 'TypeScript, Charts, API Integration',
       description: 'Real-time analytics platform with subscription management and data visualization.',
-      gradient: 'from-blue-500 to-cyan-500',
-      image: '/images/saas-dashboard.jpg',
+      image: '/assets/projects/saas-dashboard-screenshot.jpg', // Update with your actual path
       link: 'freelancerassistance.lovable.app'
     },
     {
       title: 'Booking Management System',
       tech: 'React, Calendar API, Notifications',
       description: 'Appointment scheduling system with automated reminders and payment processing.',
-      gradient: 'from-green-500 to-teal-500',
-      image: '/images/booking.jpg',
+      image: '/assets/projects/booking-system-screenshot.jpg', // Update with your actual path
       link: 'https://your-booking-system.com'
     },
     {
       title: 'Social Media App',
       tech: 'React, Real-time DB, Authentication',
       description: 'Community platform with user profiles, posts, comments, and real-time interactions.',
-      image: 'https://files.imagetourl.net/uploads/1760358752168-eb843ce2-4540-46f6-b9a1-c6fcc6a4c5cf.jpg',
+      image: '/assets/projects/social-app-screenshot.jpg', // Update with your actual path
       link: 'https://your-social-app.com'
     },
     {
       title: 'Task Management Tool',
       tech: 'React, Drag & Drop, Collaboration',
       description: 'Project management solution with team collaboration and progress tracking features.',
-      gradient: 'from-indigo-500 to-purple-500',
-      image: '/images/task-tool.jpg',
+      image: '/assets/projects/task-tool-screenshot.jpg', // Update with your actual path
       link: 'https://sudharsanchatbot.lovable.app'
     },
     {
       title: 'Portfolio Generator',
       tech: 'Dynamic Templates, CMS',
       description: 'Automated portfolio builder that creates beautiful websites from user data.',
-      gradient: 'from-yellow-500 to-orange-500',
-      image: '/images/portfolio.jpg',
+      image: '/assets/projects/portfolio-generator-screenshot.jpg', // Update with your actual path
       link: 'https://your-portfolio-generator.com'
     }
   ];
@@ -54,6 +49,7 @@ export default function Projects() {
   return (
     <section id="projects" className="py-24 bg-slate-900">
       <div className="container mx-auto px-6">
+        {/* Branding remains consistent */}
         <h2 className="text-5xl font-bold text-center mb-16 text-white">
           Featured <span className="text-cyan-400">Projects</span>
         </h2>
@@ -65,20 +61,29 @@ export default function Projects() {
               href={project.link}
               target="_blank"
               rel="noopener noreferrer"
+              // Card styles: darker background, rounded, shadow, transform on hover
               className="group bg-slate-800 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
             >
-              <div className={`h-48 bg-gradient-to-br ${project.gradient} relative overflow-hidden`}>
+              {/* IMAGE CONTAINER: Full-bleed image with a dark overlay and hover effect */}
+              <div className={`h-60 relative overflow-hidden`}>
                 <img
                   src={project.image}
                   alt={project.title}
-                  className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-50 transition-opacity duration-300"
+                  // Image styling: full size, cover, slight darkening on load
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-300"></div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <ExternalLink className="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform group-hover:scale-110" />
+                
+                {/* Dark, semi-transparent overlay - visible on hover to emphasize the link icon */}
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/60 transition-colors duration-300 flex items-center justify-center">
+                  {/* External Link Icon - becomes visible and scales up on hover */}
+                  <ExternalLink 
+                    className="w-10 h-10 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:scale-110" 
+                    aria-label={`View ${project.title}`}
+                  />
                 </div>
               </div>
 
+              {/* TEXT CONTENT: Padding, spacing, and hover color for the title */}
               <div className="p-6 space-y-4">
                 <h3 className="text-2xl font-bold text-white group-hover:text-cyan-400 transition-colors">
                   {project.title}
