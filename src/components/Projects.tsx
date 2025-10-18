@@ -6,7 +6,7 @@ export default function Projects() {
       title: 'E-Commerce Platform',
       tech: 'React, Supabase, Stripe',
       description: 'Full-featured online store with payment integration, inventory management, and admin dashboard.',
-      image: '/assets/projects/professional photo.jpg', // Update with your actual path
+      image: '/assets/professional photo.jpg', // Update with your actual path
       link: 'https://estorebysudharsan.lovable.app'
     },
     {
