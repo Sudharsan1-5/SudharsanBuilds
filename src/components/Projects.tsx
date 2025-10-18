@@ -13,7 +13,7 @@ export default function Projects() {
       title: 'SaaS Analytics Dashboard',
       tech: 'TypeScript, Charts, API Integration',
       description: 'Real-time analytics platform with subscription management and data visualization.',
-      image: '/assets/projects/saas-dashboard-screenshot.jpg', // Update with your actual path
+      image: '/assets/skillpathai.jpg', // Update with your actual path
       link: 'freelancerassistance.lovable.app'
     },
     {
