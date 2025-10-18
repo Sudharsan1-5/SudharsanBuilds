@@ -20,7 +20,7 @@ export default function Projects() {
       title: 'Booking Management System',
       tech: 'React, Calendar API, Notifications',
       description: 'Appointment scheduling system with automated reminders and payment processing.',
-      image: '/assets/projects/booking-system-screenshot.jpg', // Update with your actual path
+      image: '/assets/projects/skillpathai.jpg', // Update with your actual path
       link: 'https://your-booking-system.com'
     },
     {
