@@ -10,9 +10,9 @@ export default function Projects() {
       link: 'https://estorebysudharsan.lovable.app'
     },
     {
-      title: 'SaaS Analytics Dashboard',
-      tech: 'TypeScript, Charts, API Integration',
-      description: 'Real-time analytics platform with subscription management and data visualization.',
+      title: 'SkillPathAI App',
+      tech: 'React, Firebase, OpenAI API, TailwindCSS',
+      description: 'AI-powered personalized learning assistant that dynamically generates tailored learning paths and practical projects based on user-defined career goals. Features YouTube integration for curated educational content, comprehensive project tracking, and real-time progress analytics.',
       image: '/assets/skillpathai.jpg', // Update with your actual path
       link: 'freelancerassistance.lovable.app'
     },
