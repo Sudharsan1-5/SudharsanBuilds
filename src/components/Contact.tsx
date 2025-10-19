@@ -82,13 +82,13 @@ export default function Contact() {
             <div>
               <h4 className="text-xl font-bold text-slate-900 mb-4">Connect With Me</h4>
               <div className="flex gap-4">
-                <a href="#" className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-cyan-600 transition-colors">
+                <a href="https://github.com/Sudharsan1-5" className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-cyan-600 transition-colors">
                   <Github className="w-6 h-6" />
                 </a>
-                <a href="#" className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-cyan-600 transition-colors">
+                <a href="https://linkedin.com/in/sudharsan-k-2027b1370" className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-cyan-600 transition-colors">
                   <Linkedin className="w-6 h-6" />
                 </a>
-                <a href="#" className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-cyan-600 transition-colors">
+                <a href="https://x.com/SudharsanBuilds" className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-cyan-600 transition-colors">
                   <Twitter className="w-6 h-6" />
                 </a>
               </div>
