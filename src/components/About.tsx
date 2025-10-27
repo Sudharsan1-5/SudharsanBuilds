@@ -32,18 +32,18 @@ export default function About() {
   };
 
   return (
-    <section id="about" className="py-24 bg-slate-50">
-      <div className="container mx-auto px-6">
+    <section id="about" className="py-16 md:py-24 bg-slate-50">
+      <div className="container mx-auto px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-5xl font-bold text-center mb-16 text-slate-900">
+          <h2 className="text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16 text-slate-900">
             About <span className="text-cyan-600">Me</span>
           </h2>
 
-          <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
             {/* ---------- 3D INTERACTIVE IMAGE SECTION ---------- */}
             <div className="flex justify-center">
               <motion.div
-                className="relative w-96 h-96 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-3xl shadow-2xl overflow-hidden flex items-center justify-center"
+                className="relative w-64 h-64 md:w-96 md:h-96 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-3xl shadow-2xl overflow-hidden flex items-center justify-center"
                 onMouseMove={handleMouseMove}
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={handleMouseLeave}
@@ -71,8 +71,8 @@ export default function About() {
             </div>
 
             {/* ---------- TEXT SECTION ---------- */}
-            <div className="space-y-6">
-              <p className="text-lg text-slate-700 leading-relaxed">
+            <div className="space-y-4 md:space-y-6">
+              <p className="text-base md:text-lg text-slate-700 leading-relaxed">
                 Hi! I'm a passionate developer specializing in transforming
                 ideas into fully functional web applications and SaaS products.
                 With expertise in modern no-code and AI-assisted development, I
@@ -80,7 +80,7 @@ export default function About() {
                 quickly and efficiently.
               </p>
 
-              <p className="text-lg text-slate-700 leading-relaxed">
+              <p className="text-base md:text-lg text-slate-700 leading-relaxed">
                 My goal is to provide high-quality, production-ready solutions
                 that not only look stunning but also deliver exceptional user
                 experiences. Whether you need an e-commerce platform, a
@@ -88,18 +88,18 @@ export default function About() {
                 covered.
               </p>
 
-              <div className="pt-6">
-                <h3 className="text-2xl font-bold text-slate-900 mb-6">
+              <div className="pt-4 md:pt-6">
+                <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">
                   Core Skills
                 </h3>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   {skills.map((skill, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1"
+                      className="flex items-center gap-3 p-3 md:p-4 bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1"
                     >
-                      <div className="text-cyan-600">{skill.icon}</div>
-                      <span className="text-slate-800 font-medium">
+                      <div className="text-cyan-600 flex-shrink-0">{skill.icon}</div>
+                      <span className="text-slate-800 font-medium text-sm md:text-base">
                         {skill.name}
                       </span>
                     </div>

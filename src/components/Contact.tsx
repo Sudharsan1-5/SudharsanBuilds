@@ -50,17 +50,17 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="py-24 bg-slate-50">
-      <div className="container mx-auto px-6">
-        <h2 className="text-5xl font-bold text-center mb-16 text-slate-900">
+    <section id="contact" className="py-16 md:py-24 bg-slate-50">
+      <div className="container mx-auto px-4 md:px-6">
+        <h2 className="text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16 text-slate-900">
           Get In <span className="text-cyan-600">Touch</span>
         </h2>
 
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
-          <div className="space-y-8">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-8 md:gap-12">
+          <div className="space-y-6 md:space-y-8">
             <div>
-              <h3 className="text-3xl font-bold text-slate-900 mb-4">Let's Work Together</h3>
-              <p className="text-lg text-slate-600 leading-relaxed">
+              <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-3 md:mb-4">Let's Work Together</h3>
+              <p className="text-base md:text-lg text-slate-600 leading-relaxed">
                 Ready to bring your idea to life? Fill out the form and I'll get back to you within 24 hours. Let's create something amazing together!
               </p>
             </div>
@@ -80,8 +80,8 @@ export default function Contact() {
             </div>
 
             <div>
-              <h4 className="text-xl font-bold text-slate-900 mb-4">Connect With Me</h4>
-              <div className="flex gap-4">
+              <h4 className="text-lg md:text-xl font-bold text-slate-900 mb-3 md:mb-4">Connect With Me</h4>
+              <div className="flex gap-3 md:gap-4">
                 <a href="https://github.com/Sudharsan1-5" className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-white hover:bg-cyan-600 transition-colors">
                   <Github className="w-6 h-6" />
                 </a>
@@ -97,11 +97,11 @@ export default function Contact() {
 
           <form
             onSubmit={handleSubmit}
-            className="bg-white p-8 rounded-2xl shadow-xl space-y-6"
+            className="bg-white p-5 md:p-8 rounded-2xl shadow-xl space-y-4 md:space-y-6"
           >
 
             <div>
-              <label htmlFor="name" className="block text-slate-700 font-semibold mb-2">
+              <label htmlFor="name" className="block text-slate-700 font-semibold mb-2 text-sm md:text-base">
                 Your Name
               </label>
               <input
@@ -111,13 +111,13 @@ export default function Contact() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-sm md:text-base"
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-slate-700 font-semibold mb-2">
+              <label htmlFor="email" className="block text-slate-700 font-semibold mb-2 text-sm md:text-base">
                 Email Address
               </label>
               <input
@@ -127,13 +127,13 @@ export default function Contact() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-sm md:text-base"
                 placeholder="john@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="projectType" className="block text-slate-700 font-semibold mb-2">
+              <label htmlFor="projectType" className="block text-slate-700 font-semibold mb-2 text-sm md:text-base">
                 Project Type
               </label>
               <select
@@ -142,8 +142,7 @@ export default function Contact() {
                 value={formData.projectType}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-                placeholder="Select a project type"
+                className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-sm md:text-base"
               >
                 <option value="">Select a project type</option>
                 <option value="ecommerce">E-commerce Website</option>
@@ -154,7 +153,7 @@ export default function Contact() {
             </div>
 
             <div>
-              <label htmlFor="message" className="block text-slate-700 font-semibold mb-2">
+              <label htmlFor="message" className="block text-slate-700 font-semibold mb-2 text-sm md:text-base">
                 Project Details
               </label>
               <textarea
@@ -164,7 +163,7 @@ export default function Contact() {
                 onChange={handleChange}
                 required
                 rows={4}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all resize-none"
+                className="w-full px-3 py-2.5 md:px-4 md:py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all resize-none text-sm md:text-base"
                 placeholder="Tell me about your project..."
               />
             </div>
@@ -172,7 +171,7 @@ export default function Contact() {
             <button
               type="submit"
               disabled={status === "sending"}
-              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-4 rounded-lg font-semibold hover:shadow-xl hover:shadow-cyan-500/50 transition-all duration-300 flex items-center justify-center gap-2 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-3 md:py-4 rounded-lg font-semibold hover:shadow-xl hover:shadow-cyan-500/50 transition-all duration-300 flex items-center justify-center gap-2 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
             >
               {status === "sending" ? (
                 <>
@@ -200,12 +199,12 @@ export default function Contact() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 30, scale: 0.8 }}
               transition={{ duration: 0.5, type: "spring" }}
-              className="fixed bottom-10 right-10 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"
+              className="fixed bottom-4 right-4 md:bottom-10 md:right-10 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-3 md:px-8 md:py-4 rounded-xl shadow-2xl z-50 flex items-center gap-2 md:gap-3 max-w-[calc(100vw-2rem)]"
             >
-              <span className="text-2xl">✅</span>
+              <span className="text-xl md:text-2xl">✅</span>
               <div>
-                <p className="font-bold text-lg">Success!</p>
-                <p className="text-sm">Your message was sent successfully!</p>
+                <p className="font-bold text-base md:text-lg">Success!</p>
+                <p className="text-xs md:text-sm">Your message was sent successfully!</p>
               </div>
             </motion.div>
           )}
@@ -216,12 +215,12 @@ export default function Contact() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 30, scale: 0.8 }}
               transition={{ duration: 0.5, type: "spring" }}
-              className="fixed bottom-10 right-10 bg-gradient-to-r from-red-500 to-rose-600 text-white px-8 py-4 rounded-xl shadow-2xl z-50 flex items-center gap-3"
+              className="fixed bottom-4 right-4 md:bottom-10 md:right-10 bg-gradient-to-r from-red-500 to-rose-600 text-white px-4 py-3 md:px-8 md:py-4 rounded-xl shadow-2xl z-50 flex items-center gap-2 md:gap-3 max-w-[calc(100vw-2rem)]"
             >
-              <span className="text-2xl">❌</span>
+              <span className="text-xl md:text-2xl">❌</span>
               <div>
-                <p className="font-bold text-lg">Oops!</p>
-                <p className="text-sm">Something went wrong. Please try again.</p>
+                <p className="font-bold text-base md:text-lg">Oops!</p>
+                <p className="text-xs md:text-sm">Something went wrong. Please try again.</p>
               </div>
             </motion.div>
           )}

@@ -23,26 +23,26 @@ export default function Process() {
   ];
 
   return (
-    <section id="process" className="py-24 bg-white">
-      <div className="container mx-auto px-6">
-        <h2 className="text-5xl font-bold text-center mb-16 text-slate-900">
+    <section id="process" className="py-16 md:py-24 bg-white">
+      <div className="container mx-auto px-4 md:px-6">
+        <h2 className="text-4xl md:text-5xl font-bold text-center mb-12 md:mb-16 text-slate-900">
           How I <span className="text-cyan-600">Work</span>
         </h2>
 
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-8">
           {steps.map((step, index) => (
             <div key={index} className="relative">
-              <div className="text-center space-y-6 group">
-                <div className={`w-24 h-24 mx-auto bg-gradient-to-br ${step.color} rounded-2xl flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+              <div className="text-center space-y-4 md:space-y-6 group">
+                <div className={`w-20 h-20 md:w-24 md:h-24 mx-auto bg-gradient-to-br ${step.color} rounded-2xl flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
                   {step.icon}
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-4xl font-bold text-slate-300">{index + 1}</span>
-                    <h3 className="text-3xl font-bold text-slate-900">{step.title}</h3>
+                <div className="space-y-2 md:space-y-3">
+                  <div className="flex items-center justify-center gap-2 md:gap-3">
+                    <span className="text-3xl md:text-4xl font-bold text-slate-300">{index + 1}</span>
+                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900">{step.title}</h3>
                   </div>
-                  <p className="text-slate-600 leading-relaxed px-4">
+                  <p className="text-slate-600 leading-relaxed px-2 md:px-4 text-sm md:text-base">
                     {step.description}
                   </p>
                 </div>
