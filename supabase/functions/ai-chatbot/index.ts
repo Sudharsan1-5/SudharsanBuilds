@@ -106,7 +106,7 @@ Important: When you mention features, technologies, or solutions, briefly explai
     ];
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -124,10 +124,24 @@ Important: When you mention features, technologies, or solutions, briefly explai
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("Gemini API Error:", errorData);
+      const errorText = await response.text();
+      console.error("Gemini API Error - Status:", response.status);
+      console.error("Gemini API Error - Response:", errorText);
+      console.error("Gemini API Error - URL:", response.url);
+
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+
       return new Response(
-        JSON.stringify({ error: "Failed to get response from AI service" }),
+        JSON.stringify({
+          error: "Failed to get response from AI service",
+          details: errorData,
+          status: response.status
+        }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
