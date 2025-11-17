@@ -99,10 +99,10 @@ const PROJECTS: Project[] = [
   endDate: '2024-08-20',
   featured: true,
   screenshots: [
-    '/images/projects/rsk-enterprises/homepage.jpg',
-    '/images/projects/rsk-enterprises/services.jpg',
-    '/images/projects/rsk-enterprises/contact.jpg',
-    '/images/projects/rsk-enterprises/about.jpg'
+    '/images/projects/rsk-enterprises/homepage.svg',
+    '/images/projects/rsk-enterprises/services.svg',
+    '/images/projects/rsk-enterprises/contact.svg',
+    '/images/projects/rsk-enterprises/about.svg'
   ],
   clientName: 'RSK Enterprises',
   clientTestimonial: {
@@ -387,8 +387,9 @@ export default function Projects() {
                 <div className="relative w-full h-full">
                   <img
                     src={previewCache[project.link] || getWebsitePreview(project.link)}
-                    alt={`${project.title} preview`}
+                    alt={`${project.title} preview image`}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-105"
+                    loading="lazy"
                     onLoad={(e) => handleImageLoad(project.link, (e.target as HTMLImageElement).src)}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = `https://via.placeholder.com/600x400/1e293b/64748b?text=${encodeURIComponent(project.title)}`;
@@ -513,8 +514,9 @@ export default function Projects() {
                   <div className="aspect-video relative rounded-xl overflow-hidden shadow-2xl border border-slate-700 bg-slate-700">
                     <img
                       src={previewCache[selectedProject.link] || getWebsitePreview(selectedProject.link)}
-                      alt={`${selectedProject.title} preview`}
+                      alt={`${selectedProject.title} preview image`}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                       onLoad={(e) => handleImageLoad(selectedProject.link, (e.target as HTMLImageElement).src)}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = `https://via.placeholder.com/1200x675/1e293b/64748b?text=${encodeURIComponent(selectedProject.title)}`;

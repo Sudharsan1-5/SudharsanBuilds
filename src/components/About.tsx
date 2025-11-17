@@ -59,10 +59,11 @@ export default function About() {
 
                 {/* Profile Image */}
                 <motion.img
-                  src="https://files.imagetourl.net/uploads/1760358752168-eb843ce2-4540-46f6-b9a1-c6fcc6a4c5cf.jpg" // Replace with your image path or external URL
-                  alt="Sudharsan"
+                  src={new URL('../assets/professional photo.jpg', import.meta.url).href}
+                  alt="Sudharsan - Full-Stack Web Developer"
                   className="w-full h-full object-cover rounded-3xl transition-all duration-500"
                   whileHover={{ scale: 1.12 }}
+                  loading="lazy"
                 />
 
                 {/* Soft gradient overlay for depth */}
