@@ -95,13 +95,18 @@ Important: When you mention features, technologies, or solutions, briefly explai
     }
 
     // Convert conversation history to Gemini format
-    const geminiContents = messages.map((msg: any) => ({
-      role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
-    }));
+    // Add system prompt as first user/model exchange for compatibility
+    const geminiContents = [
+      { role: "user", parts: [{ text: "System context: " + systemPrompt }] },
+      { role: "model", parts: [{ text: "Understood. I'll follow these guidelines." }] },
+      ...messages.map((msg: any) => ({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }],
+      }))
+    ];
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -109,9 +114,6 @@ Important: When you mention features, technologies, or solutions, briefly explai
         },
         body: JSON.stringify({
           contents: geminiContents,
-          systemInstruction: {
-            parts: [{ text: systemPrompt }],
-          },
           generationConfig: {
             temperature: 0.8,
             topP: 0.95,
