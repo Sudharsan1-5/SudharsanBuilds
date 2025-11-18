@@ -95,15 +95,28 @@ Important: When you mention features, technologies, or solutions, briefly explai
     }
 
     // Convert conversation history to Gemini format
-    // Add system prompt as first user/model exchange for compatibility
-    const geminiContents = [
+    // Ensure strict user/model alternation
+    const geminiContents = [];
+
+    // Add system prompt as first exchange
+    geminiContents.push(
       { role: "user", parts: [{ text: "System context: " + systemPrompt }] },
-      { role: "model", parts: [{ text: "Understood. I'll follow these guidelines." }] },
-      ...messages.map((msg: any) => ({
+      { role: "model", parts: [{ text: "Understood. I'll follow these guidelines." }] }
+    );
+
+    // Add conversation history, ensuring alternation
+    for (const msg of conversationHistory) {
+      geminiContents.push({
         role: msg.role === "assistant" ? "model" : "user",
         parts: [{ text: msg.content }],
-      }))
-    ];
+      });
+    }
+
+    // Add the new user message
+    geminiContents.push({
+      role: "user",
+      parts: [{ text: message }],
+    });
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`,
