@@ -26,13 +26,18 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const systemPrompt = `You are Sudharsan's AI Assistant - a web development expert helping visitors on his portfolio.
+    const systemPrompt = `You are Sudharsan's AI Assistant on his portfolio website.
 
-Expertise: SaaS development, e-commerce, UI/UX, AI integration, React, Node.js, TypeScript.
+Your role: Help visitors understand Sudharsan's web development services (SaaS, e-commerce, UI/UX, AI integration).
 
-Style: Professional, warm, helpful. Keep responses concise (2-4 sentences). Use **bold** for key points.
+Important guidelines:
+- Keep ALL responses under 3 sentences
+- If asked personal questions about Sudharsan (age, location, private life), politely decline and redirect: "I focus on his professional expertise rather than personal details. Let me tell you about his work instead!"
+- If asked about yourself (your name, who built you, etc.), acknowledge briefly then redirect: "I'm his AI assistant here to help you learn about his services. What interests you about his work?"
+- Stay professional, warm, and helpful
+- Use **bold** for key points
 
-Goal: Help visitors understand how Sudharsan can solve their web development needs.`;
+Focus on: React, Node.js, TypeScript, SaaS development, e-commerce platforms.`;
 
     const messages = [
       ...conversationHistory.map((msg: any) => ({
@@ -60,8 +65,8 @@ Goal: Help visitors understand how Sudharsan can solve their web development nee
       { role: "model", parts: [{ text: "Understood. I'll follow these guidelines." }] }
     );
 
-    // Add conversation history (limit to last 6 messages to prevent token overflow)
-    const recentHistory = conversationHistory.slice(-6);
+    // Add conversation history (limit to last 4 messages to prevent token overflow)
+    const recentHistory = conversationHistory.slice(-4);
     for (const msg of recentHistory) {
       geminiContents.push({
         role: msg.role === "assistant" ? "model" : "user",
@@ -86,9 +91,9 @@ Goal: Help visitors understand how Sudharsan can solve their web development nee
         body: JSON.stringify({
           contents: geminiContents,
           generationConfig: {
-            temperature: 0.8,
+            temperature: 0.7,
             topP: 0.95,
-            maxOutputTokens: 600,
+            maxOutputTokens: 300,
           },
         }),
       }
@@ -136,10 +141,12 @@ Goal: Help visitors understand how Sudharsan can solve their web development nee
     // Check for safety filters or blocked content
     if (candidate.finishReason && candidate.finishReason !== "STOP") {
       console.error("Gemini blocked content:", candidate.finishReason, candidate.safetyRatings);
+
+      // Return a natural fallback instead of template
       return new Response(
         JSON.stringify({
           success: true,
-          message: "I appreciate your question, but I need to keep our conversation focused on how I can help with your web development needs. Whether you're looking to build a stunning website, launch a SaaS product, or transform your digital presence, I'm here to provide expert guidance. What project can I help you with today?",
+          message: "I'd love to help, but that question goes beyond what I can assist with. **Let's talk about Sudharsan's web development services** - what type of project interests you?",
           role: "assistant",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -147,7 +154,7 @@ Goal: Help visitors understand how Sudharsan can solve their web development nee
     }
 
     // Extract message with fallback
-    const assistantMessage = candidate?.content?.parts?.[0]?.text || "I'm here to help with your web development needs. How can I assist you today?";
+    const assistantMessage = candidate?.content?.parts?.[0]?.text || "How can I help you learn about Sudharsan's web development expertise today?";
 
     return new Response(
       JSON.stringify({
