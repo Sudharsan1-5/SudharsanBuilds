@@ -19,7 +19,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white text-xl font-bold mb-4">Sudharsan Builds</h3>
             <p className="text-slate-400 mb-4 leading-relaxed">
-              Professional web development services in Trichy, Tamil Nadu. Building modern websites that convert visitors into customers.
+              Professional freelance web development services across India. Building modern websites that convert visitors into customers. 100% Remote work.
             </p>
             <div className="flex gap-3">
               <a
@@ -108,7 +108,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-1" />
-                <span className="text-slate-400">Tiruchirappalli (Trichy), Tamil Nadu, India</span>
+                <span className="text-slate-400">Remote Work - Serving Clients Across India</span>
               </li>
               <li className="flex items-start gap-2">
                 <Mail className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-1" />
@@ -122,15 +122,15 @@ export default function Footer() {
               <li className="flex items-start gap-2">
                 <Phone className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-1" />
                 <a
-                  href="tel:+919360736633"
+                  href="tel:+916381556407"
                   className="text-slate-400 hover:text-cyan-400 transition-colors"
                 >
-                  +91 93607 36633
+                  +91 63815 56407
                 </a>
               </li>
               <li>
                 <a
-                  href="https://wa.me/919360736633"
+                  href="https://wa.me/916381556407"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 mt-2"
@@ -152,7 +152,7 @@ export default function Footer() {
               © {currentYear} Sudharsan Builds. All rights reserved.
             </p>
             <p className="flex items-center gap-2 text-sm">
-              Built with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> in Trichy, Tamil Nadu
+              Built with <Heart className="w-4 h-4 text-red-500 fill-red-500" /> by a Freelance Developer in India
             </p>
           </div>
         </div>

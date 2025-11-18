@@ -9,7 +9,7 @@ interface WhatsAppButtonProps {
 }
 
 export default function WhatsAppButton({
-  phoneNumber = '919360736633',
+  phoneNumber = '916381556407',
   message = 'Hi! I\'m interested in your web development services.',
   position = 'fixed',
   variant = 'default'

@@ -1,5 +1,6 @@
-import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2 } from 'lucide-react';
+import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 
 interface Service {
   icon: React.ReactNode;
@@ -11,17 +12,19 @@ interface Service {
   timeline: string;
   ctaText: string;
   ctaAction: 'book' | 'quote';
-  depositAmount?: string;
+  depositAmount?: number;
   popular?: boolean;
 }
 
 export default function Services() {
+  const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+
   const services: Service[] = [
     {
       icon: <Globe className="w-8 h-8 md:w-10 md:h-10" />,
       name: 'Landing Page',
       price: '₹15,000',
-      description: '1-2 page website, modern design, mobile responsive, SEO optimized',
+      description: '1-2 page website, modern design, mobile responsive, perfect for launching quickly',
       features: [
         'Responsive Design',
         'Contact Form Integration',
@@ -33,13 +36,31 @@ export default function Services() {
       timeline: '1-2 weeks',
       ctaText: 'Book Now - Pay ₹5,000 Deposit',
       ctaAction: 'book',
-      depositAmount: '5000',
+      depositAmount: 5000,
+    },
+    {
+      icon: <User className="w-8 h-8 md:w-10 md:h-10" />,
+      name: 'Portfolio Website',
+      price: '₹20,000',
+      description: 'Professional portfolio for freelancers, designers, developers & creatives',
+      features: [
+        'Project Showcase Gallery',
+        'About & Skills Section',
+        'Resume Download',
+        'Contact Form',
+        'Testimonials Section',
+        'Mobile Responsive'
+      ],
+      timeline: '2-3 weeks',
+      ctaText: 'Book Now - Pay ₹7,000 Deposit',
+      ctaAction: 'book',
+      depositAmount: 7000,
     },
     {
       icon: <Building2 className="w-8 h-8 md:w-10 md:h-10" />,
       name: 'Business Website',
       price: '₹30,000',
-      description: '5-10 pages, professional design, CMS integration, blog',
+      description: '5-10 pages, professional design, CMS integration, perfect for established businesses',
       features: [
         'Multi-page Layout (5-10 pages)',
         'CMS Integration (Easy Updates)',
@@ -51,16 +72,34 @@ export default function Services() {
       timeline: '3-4 weeks',
       ctaText: 'Book Now - Pay ₹10,000 Deposit',
       ctaAction: 'book',
-      depositAmount: '10000',
+      depositAmount: 10000,
       popular: true,
+    },
+    {
+      icon: <Briefcase className="w-8 h-8 md:w-10 md:h-10" />,
+      name: 'Personal Brand Website',
+      price: '₹25,000',
+      description: 'Build your personal brand with a professional website for coaches, consultants & professionals',
+      features: [
+        'About & Services Pages',
+        'Blog/Articles Section',
+        'Email Newsletter Integration',
+        'Social Media Integration',
+        'Booking/Calendar Integration',
+        'SEO & Analytics'
+      ],
+      timeline: '3 weeks',
+      ctaText: 'Book Now - Pay ₹8,000 Deposit',
+      ctaAction: 'book',
+      depositAmount: 8000,
     },
     {
       icon: <ShoppingCart className="w-8 h-8 md:w-10 md:h-10" />,
       name: 'E-Commerce Store',
       price: '₹50,000',
-      description: 'Complete online store, payment integration, inventory management',
+      description: 'Complete online store with payment gateway, inventory management & admin panel',
       features: [
-        'Product Catalog',
+        'Product Catalog (Unlimited)',
         'Shopping Cart',
         'Razorpay/PayPal Integration',
         'Inventory Management',
@@ -70,20 +109,58 @@ export default function Services() {
       timeline: '4-6 weeks',
       ctaText: 'Book Now - Pay ₹15,000 Deposit',
       ctaAction: 'book',
-      depositAmount: '15000',
+      depositAmount: 15000,
+    },
+    {
+      icon: <Rocket className="w-8 h-8 md:w-10 md:h-10" />,
+      name: 'SaaS Product',
+      price: '₹75,000+',
+      priceSubtext: 'Starting from',
+      description: 'Full-featured SaaS platform with user management, subscriptions & admin dashboard',
+      features: [
+        'User Authentication',
+        'Subscription Billing',
+        'Admin & User Dashboards',
+        'API Integration',
+        'Database Design',
+        'Scalable Architecture'
+      ],
+      timeline: '6-10 weeks',
+      ctaText: 'Book Now - Pay ₹20,000 Deposit',
+      ctaAction: 'book',
+      depositAmount: 20000,
+    },
+    {
+      icon: <Layers className="w-8 h-8 md:w-10 md:h-10" />,
+      name: 'Web Application',
+      price: '₹60,000+',
+      priceSubtext: 'Starting from',
+      description: 'Custom web applications with complex features & functionality',
+      features: [
+        'Custom Requirements',
+        'Database & Backend',
+        'User Management',
+        'Real-time Features',
+        'Third-party Integrations',
+        'Responsive Design'
+      ],
+      timeline: '5-8 weeks',
+      ctaText: 'Book Now - Pay ₹18,000 Deposit',
+      ctaAction: 'book',
+      depositAmount: 18000,
     },
     {
       icon: <Code2 className="w-8 h-8 md:w-10 md:h-10" />,
       name: 'Custom Development',
       price: '₹500-₹1000/hour',
       priceSubtext: 'Negotiable',
-      description: 'Custom projects, API integration, complex features',
+      description: 'Hourly-based custom projects, API integrations, complex features & maintenance',
       features: [
         'Custom Requirements',
         'Full-stack Development',
         'API Integration',
-        'Database Design',
-        'Third-party Integrations',
+        'Bug Fixes & Updates',
+        'Code Reviews',
         'Ongoing Support'
       ],
       timeline: 'Flexible',
@@ -92,15 +169,80 @@ export default function Services() {
     },
   ];
 
-  const handleBooking = (service: Service) => {
-    if (service.ctaAction === 'quote') {
-      // Scroll to contact form
+  const handleBooking = async (service: Service) => {
+    if (service.ctaAction === 'quote' || !service.depositAmount) {
+      // Scroll to contact form for quotes
       const contactSection = document.getElementById('contact');
       if (contactSection) {
         contactSection.scrollIntoView({ behavior: 'smooth' });
       }
-    } else {
-      // For now, scroll to contact - we'll add Razorpay later
+      return;
+    }
+
+    // Handle Razorpay payment
+    setIsPaymentLoading(true);
+
+    try {
+      // Call Supabase Edge Function to create Razorpay order
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({
+          amount: service.depositAmount * 100, // Convert to paise
+          currency: 'INR',
+          receipt: `deposit_${service.name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`,
+          notes: {
+            service_name: service.name,
+            service_price: service.price,
+            deposit_amount: service.depositAmount
+          }
+        })
+      });
+
+      const { orderId, amount } = await response.json();
+
+      // Load Razorpay checkout
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: amount,
+        currency: 'INR',
+        name: 'Sudharsan Builds',
+        description: `Deposit for ${service.name}`,
+        order_id: orderId,
+        handler: function (response: any) {
+          // Payment successful
+          alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}\n\nThank you for your deposit! I'll contact you on WhatsApp within 24 hours to discuss your project.`);
+
+          // You can send this to your backend to verify and store
+          console.log('Payment Response:', response);
+        },
+        prefill: {
+          name: '',
+          email: '',
+          contact: ''
+        },
+        theme: {
+          color: '#0891b2'
+        },
+        modal: {
+          ondismiss: function() {
+            setIsPaymentLoading(false);
+          }
+        }
+      };
+
+      const razorpay = new (window as any).Razorpay(options);
+      razorpay.open();
+      setIsPaymentLoading(false);
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Unable to process payment. Please contact us directly via WhatsApp or email.');
+      setIsPaymentLoading(false);
+
+      // Fallback to contact form
       const contactSection = document.getElementById('contact');
       if (contactSection) {
         contactSection.scrollIntoView({ behavior: 'smooth' });
@@ -140,7 +282,7 @@ export default function Services() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
+              transition={{ delay: index * 0.05 }}
               className={`relative bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${
                 service.popular ? 'border-cyan-500' : 'border-slate-100'
               }`}
@@ -166,13 +308,13 @@ export default function Services() {
               </div>
 
               {/* Service Name */}
-              <h3 className="text-2xl md:text-2xl font-bold text-center text-slate-900 mb-2">
+              <h3 className="text-xl md:text-2xl font-bold text-center text-slate-900 mb-2">
                 {service.name}
               </h3>
 
               {/* Price */}
               <div className="text-center mb-4">
-                <p className="text-3xl md:text-4xl font-extrabold text-cyan-600">
+                <p className="text-2xl md:text-3xl font-extrabold text-cyan-600">
                   {service.price}
                 </p>
                 {service.priceSubtext && (
@@ -192,7 +334,7 @@ export default function Services() {
               </div>
 
               {/* Features */}
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2 mb-8">
                 {service.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-2 text-slate-700 text-sm">
                     <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
@@ -204,13 +346,14 @@ export default function Services() {
               {/* CTA Button */}
               <button
                 onClick={() => handleBooking(service)}
-                className={`w-full py-3 md:py-4 rounded-xl font-bold text-sm md:text-base transition-all duration-300 transform hover:scale-105 shadow-lg ${
+                disabled={isPaymentLoading}
+                className={`w-full py-3 md:py-4 rounded-xl font-bold text-sm md:text-base transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
                   service.ctaAction === 'book'
                     ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:shadow-cyan-500/50'
                     : 'bg-gradient-to-r from-slate-700 to-slate-900 text-white hover:shadow-slate-500/50'
                 }`}
               >
-                {service.ctaText}
+                {isPaymentLoading ? 'Processing...' : service.ctaText}
               </button>
             </motion.div>
           ))}
@@ -234,15 +377,29 @@ export default function Services() {
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                 <Clock className="w-6 h-6 text-blue-600" />
               </div>
-              <span className="font-semibold">24/7 Support</span>
+              <span className="font-semibold">Fast Delivery</span>
             </div>
             <div className="flex items-center gap-2 text-slate-700">
               <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
                 <Code2 className="w-6 h-6 text-cyan-600" />
               </div>
-              <span className="font-semibold">Fast Delivery</span>
+              <span className="font-semibold">100% Remote Work</span>
             </div>
           </div>
+        </motion.div>
+
+        {/* Payment Note */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mt-12 text-center"
+        >
+          <p className="text-sm text-slate-600">
+            <strong>Secure payments via Razorpay</strong> - UPI, Cards, Net Banking accepted.
+            <br />
+            Can't pay deposit now? <a href="#contact" className="text-cyan-600 hover:underline">Contact me</a> to discuss your project first.
+          </p>
         </motion.div>
       </div>
     </section>

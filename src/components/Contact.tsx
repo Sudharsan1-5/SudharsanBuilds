@@ -50,11 +50,9 @@ export default function Contact() {
       newErrors.email = "Please enter a valid email";
     }
 
-    // Phone validation (Indian format)
+    // Phone validation (Indian format) - OPTIONAL
     const phoneRegex = /^(\+91)?[6-9]\d{9}$/;
-    if (!formData.phone.trim()) {
-      newErrors.phone = "Phone number is required";
-    } else if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
+    if (formData.phone.trim() && !phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
       newErrors.phone = "Please enter a valid Indian phone number";
     }
 
@@ -216,8 +214,8 @@ export default function Contact() {
                 </div>
                 <div>
                   <p className="font-semibold">WhatsApp</p>
-                  <a href="https://wa.me/919360736633" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:text-cyan-700">
-                    +91 93607 36633
+                  <a href="https://wa.me/916381556407" target="_blank" rel="noopener noreferrer" className="text-cyan-600 hover:text-cyan-700">
+                    +91 63815 56407
                   </a>
                 </div>
               </div>
@@ -298,7 +296,7 @@ export default function Contact() {
             {/* Phone/WhatsApp */}
             <div>
               <label htmlFor="phone" className="block text-slate-700 font-semibold mb-2 text-sm md:text-base">
-                Phone/WhatsApp Number *
+                Phone/WhatsApp Number (Optional)
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
@@ -308,7 +306,6 @@ export default function Contact() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  required
                   aria-invalid={!!errors.phone}
                   aria-describedby={errors.phone ? "phone-error" : undefined}
                   className={`w-full pl-10 pr-3 py-2.5 md:px-4 md:py-3 md:pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all text-sm md:text-base ${
@@ -343,9 +340,13 @@ export default function Contact() {
               >
                 <option value="">Select a service</option>
                 <option value="Landing Page (₹15,000)">Landing Page (₹15,000)</option>
+                <option value="Portfolio Website (₹20,000)">Portfolio Website (₹20,000)</option>
+                <option value="Personal Brand Website (₹25,000)">Personal Brand Website (₹25,000)</option>
                 <option value="Business Website (₹30,000)">Business Website (₹30,000)</option>
                 <option value="E-Commerce Store (₹50,000)">E-Commerce Store (₹50,000)</option>
-                <option value="Custom Development">Custom Development (Hourly)</option>
+                <option value="Web Application (₹60,000+)">Web Application (₹60,000+)</option>
+                <option value="SaaS Product (₹75,000+)">SaaS Product (₹75,000+)</option>
+                <option value="Custom Development (Hourly)">Custom Development (Hourly)</option>
               </select>
               {errors.service && (
                 <p id="service-error" className="text-red-500 text-xs mt-1 flex items-center gap-1">

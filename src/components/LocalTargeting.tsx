@@ -1,54 +1,56 @@
-import { MapPin, Clock, Heart, Users, Zap, Shield } from 'lucide-react';
+import { Zap, DollarSign, Video, Globe, Users, Code2, Shield, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function LocalTargeting() {
+export default function WhyFreelance() {
   const benefits = [
     {
-      icon: <Clock className="w-6 h-6" />,
-      title: 'Same Timezone',
-      description: 'Work during your business hours with instant communication'
+      icon: <DollarSign className="w-6 h-6" />,
+      title: 'Affordable Pricing',
+      description: 'No agency overhead. You pay for quality work, not expensive offices.'
     },
     {
-      icon: <MapPin className="w-6 h-6" />,
-      title: 'Local Market Knowledge',
-      description: 'Understanding of Trichy and Tamil Nadu business culture'
+      icon: <Zap className="w-6 h-6" />,
+      title: 'Quick Turnaround',
+      description: 'Dedicated focus on your project with faster delivery times.'
     },
     {
-      icon: <Users className="w-6 h-6" />,
-      title: 'Meet in Person',
-      description: 'Face-to-face meetings available for Trichy clients'
+      icon: <Video className="w-6 h-6" />,
+      title: 'Direct Communication',
+      description: 'Work directly with the developer via WhatsApp, Email, or Zoom calls.'
     },
     {
-      icon: <Heart className="w-6 h-6" />,
-      title: 'Support Local',
-      description: 'Work with a local developer, support the community'
+      icon: <Globe className="w-6 h-6" />,
+      title: '100% Remote',
+      description: 'Work from anywhere in India. No geographical limitations.'
     }
   ];
 
   const whoIHelp = [
-    'Local Shops & Retail Stores',
-    'Freelancers & Consultants',
     'Startups & Small Businesses',
+    'Freelancers & Consultants',
+    'E-commerce Stores',
     'Restaurants & Food Services',
     'Service-based Businesses',
+    'Personal Brands & Portfolios',
+    'SaaS Products',
     'Educational Institutions'
   ];
 
   const approach = [
     {
-      icon: <Zap className="w-6 h-6" />,
-      title: 'Quick Turnaround',
-      description: 'Fast delivery without compromising quality'
-    },
-    {
-      icon: <Heart className="w-6 h-6" />,
-      title: 'Affordable Pricing',
-      description: 'Transparent pricing designed for local businesses'
+      icon: <Code2 className="w-6 h-6" />,
+      title: 'Modern Tech Stack',
+      description: 'React, TypeScript, Node.js - Built with latest technologies'
     },
     {
       icon: <Shield className="w-6 h-6" />,
       title: 'Quality Focused',
-      description: 'Professional websites that convert visitors to customers'
+      description: 'Mobile-first, fast loading, SEO optimized websites'
+    },
+    {
+      icon: <Clock className="w-6 h-6" />,
+      title: 'Flexible & Responsive',
+      description: 'Available for calls, quick updates, and ongoing support'
     }
   ];
 
@@ -60,7 +62,7 @@ export default function LocalTargeting() {
   };
 
   return (
-    <section id="local-services" className="py-16 md:py-24 bg-gradient-to-b from-white to-slate-50">
+    <section id="why-freelance" className="py-16 md:py-24 bg-gradient-to-b from-white to-slate-50">
       <div className="container mx-auto px-4 md:px-6">
         {/* Header */}
         <motion.div
@@ -70,20 +72,20 @@ export default function LocalTargeting() {
           className="text-center mb-12 md:mb-16"
         >
           <div className="flex items-center justify-center gap-2 mb-4">
-            <MapPin className="w-8 h-8 text-cyan-600" />
+            <Users className="w-8 h-8 text-cyan-600" />
             <h2 className="text-4xl md:text-5xl font-bold text-slate-900">
-              Web Development Services in <span className="text-cyan-600">Trichy</span>
+              Why Choose a <span className="text-cyan-600">Freelance Developer?</span>
             </h2>
           </div>
           <p className="text-xl md:text-2xl text-slate-700 max-w-3xl mx-auto mt-4">
-            I'm a local web developer in <strong>Tiruchirappalli</strong> helping businesses go online
+            Work directly with an <strong>indie developer</strong> serving clients across India
           </p>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-2">
-            Professional websites for Trichy businesses at affordable prices
+            Professional websites at affordable prices with personalized service
           </p>
         </motion.div>
 
-        {/* Why Choose a Local Developer */}
+        {/* Benefits of Freelance */}
         <div className="mb-16">
           <motion.h3
             initial={{ opacity: 0, y: 20 }}
@@ -91,7 +93,7 @@ export default function LocalTargeting() {
             viewport={{ once: true }}
             className="text-3xl md:text-4xl font-bold text-center mb-8 text-slate-900"
           >
-            Why Choose a <span className="text-cyan-600">Local Developer?</span>
+            Benefits of Working <span className="text-cyan-600">Remote</span>
           </motion.h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -176,7 +178,51 @@ export default function LocalTargeting() {
           </div>
         </div>
 
-        {/* Local CTA */}
+        {/* Communication Methods */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-r from-slate-800 to-slate-900 p-8 md:p-12 rounded-2xl max-w-4xl mx-auto mb-12 text-white"
+        >
+          <h3 className="text-2xl md:text-3xl font-bold mb-6 text-center">
+            Let's Discuss Your Project
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                <Video className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-semibold">WhatsApp Call</p>
+                <p className="text-sm text-slate-300">Quick chat anytime</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <Video className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-semibold">Zoom Meeting</p>
+                <p className="text-sm text-slate-300">Detailed discussion</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center">
+                <Globe className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="font-semibold">Email/Chat</p>
+                <p className="text-sm text-slate-300">Async updates</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-slate-300">
+            100% Remote work - No office visits required. Work with clients from anywhere in India.
+          </p>
+        </motion.div>
+
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -185,20 +231,20 @@ export default function LocalTargeting() {
         >
           <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-8 md:p-12 rounded-2xl max-w-3xl mx-auto border-2 border-cyan-200">
             <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
-              Ready to Take Your Trichy Business Online?
+              Ready to Start Your Project?
             </h3>
             <p className="text-lg text-slate-700 mb-6">
-              Get your free website consultation today and start attracting more customers
+              Get your free consultation today and let's build something amazing together
             </p>
             <button
               onClick={scrollToContact}
               className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-xl shadow-cyan-500/30 hover:shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 transform hover:scale-105"
             >
-              <MapPin className="w-5 h-5" />
+              <Users className="w-5 h-5" />
               Get Your Free Consultation
             </button>
             <p className="text-sm text-slate-600 mt-4">
-              Serving businesses in Trichy, Tamil Nadu, and across India
+              Serving startups, businesses, and entrepreneurs across India 🇮🇳
             </p>
           </div>
         </motion.div>
