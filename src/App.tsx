@@ -1,14 +1,27 @@
+import { lazy, Suspense } from 'react';
 import Navigation from './components/Navigation';
 import Hero from './components/Hero';
 import About from './components/About';
-import Projects from './components/Projects';
-import Process from './components/Process';
-import Services from './components/Services';
-import Testimonials from './components/Testimonials';
-import Contact from './components/Contact';
 import Footer from './components/Footer';
-import AIChatbot from "./components/AIChatbot";
-import FloatingAvatar from './components/FloatingAvatar';
+
+// Lazy load below-fold and heavy components for better initial load performance
+const Projects = lazy(() => import('./components/Projects'));
+const Process = lazy(() => import('./components/Process'));
+const Services = lazy(() => import('./components/Services'));
+const Testimonials = lazy(() => import('./components/Testimonials'));
+const Contact = lazy(() => import('./components/Contact'));
+const AIChatbot = lazy(() => import('./components/AIChatbot'));
+const FloatingAvatar = lazy(() => import('./components/FloatingAvatar'));
+
+// Loading fallback component for lazy-loaded sections
+const SectionLoader = () => (
+  <div className="min-h-[200px] flex items-center justify-center bg-slate-50">
+    <div className="animate-pulse flex flex-col items-center gap-3">
+      <div className="w-12 h-12 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+      <p className="text-slate-600 text-sm">Loading...</p>
+    </div>
+  </div>
+);
 
 function App() {
   return (
@@ -16,14 +29,38 @@ function App() {
       <Navigation />
       <Hero />
       <About />
-      <Projects />
-      <Process />
-      <Services />
-      <Testimonials />
-      <Contact />
+
+      {/* Lazy load below-fold components with suspense boundaries */}
+      <Suspense fallback={<SectionLoader />}>
+        <Projects />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoader />}>
+        <Process />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoader />}>
+        <Services />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoader />}>
+        <Testimonials />
+      </Suspense>
+
+      <Suspense fallback={<SectionLoader />}>
+        <Contact />
+      </Suspense>
+
       <Footer />
-      <AIChatbot />
-      <FloatingAvatar />
+
+      {/* Lazy load interactive widgets */}
+      <Suspense fallback={null}>
+        <AIChatbot />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <FloatingAvatar />
+      </Suspense>
     </div>
   );
 }
