@@ -83,7 +83,8 @@ export default function AIChatbot() {
         },
         body: JSON.stringify({
           message: inputValue,
-          conversationHistory: messages.map((msg) => ({
+          // Only send last 4 messages to prevent payload overflow
+          conversationHistory: messages.slice(-4).map((msg) => ({
             role: msg.role,
             content: msg.content,
           })),
