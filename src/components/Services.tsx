@@ -2,6 +2,8 @@ import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Brief
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import { initEmailJS } from '../services/emailService';
 import { generateAndSendInvoice } from '../services/invoiceService';
 import { env, features } from '../utils/env';
@@ -268,10 +270,9 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       return;
     }
 
-    // Validate phone format (international + Indian)
-    const phoneRegex = /^(\+?\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/;
-    if (!phoneRegex.test(customerDetails.phone.replace(/\s/g, ''))) {
-      alert('Please enter a valid phone number (international or Indian format)');
+    // Validate phone format (international - handled by PhoneInput library)
+    if (customerDetails.phone.length < 8) {
+      alert('Please enter a valid international phone number');
       return;
     }
 
@@ -675,14 +676,20 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
                   <label htmlFor="modal-phone" className="block text-slate-700 font-semibold mb-2">
                     Phone Number *
                   </label>
-                  <input
-                    type="tel"
-                    id="modal-phone"
+                  <PhoneInput
+                    international
+                    defaultCountry="IN"
                     value={customerDetails.phone}
-                    onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    placeholder="+91 98765 43210"
-                    required
+                    onChange={(value) => setCustomerDetails({ ...customerDetails, phone: value || '' })}
+                    className="w-full"
+                    style={{
+                      '--PhoneInputCountryFlag-height': '1em',
+                      '--PhoneInput-color--focus': '#06b6d4',
+                    } as React.CSSProperties}
+                    numberInputProps={{
+                      className: 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500',
+                      required: true
+                    }}
                   />
                 </div>
 
