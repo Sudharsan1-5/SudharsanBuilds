@@ -1,10 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 import { sendBookingConfirmation, sendInvoiceEmail, sendNewBookingAlert } from './emailService';
+import { env } from '../utils/env';
 
 // Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = env.SUPABASE_URL && env.SUPABASE_ANON_KEY
+  ? createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY)
+  : null;
+
+if (!supabase) {
+  console.error('❌ Supabase client not initialized - missing environment variables');
+}
 
 export interface PaymentData {
   name: string;
@@ -131,9 +136,9 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
     }
 
     // Get configuration
-    const yourEmail = import.meta.env.VITE_YOUR_EMAIL || 'sudharsanofficial0001@gmail.com';
-    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '919876543210';
-    const upiId = import.meta.env.VITE_UPI_ID || 'sudharsan@upi';
+    const yourEmail = env.YOUR_EMAIL || 'sudharsanofficial0001@gmail.com';
+    const whatsappNumber = env.WHATSAPP_NUMBER || '919876543210';
+    const upiId = env.UPI_ID || 'sudharsan@upi';
 
     // Send booking confirmation email to customer
     const bookingConfirmationSent = await sendBookingConfirmation({

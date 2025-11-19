@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, X, Minimize2, Maximize2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { env, features } from '../utils/env';
 
 interface Message {
   id: string;
@@ -73,13 +74,18 @@ export default function AIChatbot() {
     setIsLoading(true);
 
     try {
-      const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chatbot`;
+      // Check if AI chat feature is available
+      if (!features.hasAIChat) {
+        throw new Error('AI chat system is not configured');
+      }
+
+      const apiUrl = `${env.SUPABASE_URL}/functions/v1/ai-chatbot`;
 
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          Authorization: `Bearer ${env.SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({
           message: inputValue,

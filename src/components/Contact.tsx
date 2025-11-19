@@ -3,6 +3,7 @@ import { Mail, Send, Github, Linkedin, Twitter, AlertCircle, Phone, MessageSquar
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from '@supabase/supabase-js';
 import { initEmailJS, sendContactFormEmail } from '../services/emailService';
+import { env } from '../utils/env';
 
 interface FormErrors {
   name?: string;
@@ -14,9 +15,9 @@ interface FormErrors {
 }
 
 // Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = env.SUPABASE_URL && env.SUPABASE_ANON_KEY
+  ? createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY)
+  : null;
 
 export default function Contact() {
   const [formData, setFormData] = useState({

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useIsMobile } from '../hooks/useMobile';
 import { initEmailJS } from '../services/emailService';
 import { generateAndSendInvoice } from '../services/invoiceService';
+import { env, features } from '../utils/env';
 
 interface Service {
   icon: React.ReactNode;
@@ -230,12 +231,17 @@ export default function Services() {
     setIsPaymentLoading(true);
 
     try {
+      // Check if payment feature is available
+      if (!features.hasPayment) {
+        throw new Error('Payment system is not configured. Please contact us directly.');
+      }
+
       // Call Supabase Edge Function to create Razorpay order
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment-order`, {
+      const response = await fetch(`${env.SUPABASE_URL}/functions/v1/create-payment-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
           amount: selectedService.depositAmount * 100, // Convert to paise
@@ -259,7 +265,7 @@ export default function Services() {
 
       // Load Razorpay checkout
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: env.RAZORPAY_KEY_ID,
         amount: amount,
         currency: 'INR',
         name: 'Sudharsan Builds',

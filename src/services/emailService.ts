@@ -1,10 +1,13 @@
 import emailjs from '@emailjs/browser';
+import { env, features } from '../utils/env';
 
 // Initialize EmailJS with public key
 export const initEmailJS = () => {
-  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-  if (publicKey) {
-    emailjs.init(publicKey);
+  if (features.hasEmailJS && env.EMAILJS_PUBLIC_KEY) {
+    emailjs.init(env.EMAILJS_PUBLIC_KEY);
+    console.log('✅ EmailJS initialized successfully');
+  } else {
+    console.warn('⚠️ EmailJS not configured - email notifications will be skipped');
   }
 };
 
@@ -56,8 +59,13 @@ interface NewBookingAlertData {
  */
 export const sendBookingConfirmation = async (data: BookingConfirmationData): Promise<boolean> => {
   try {
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_BOOKING;
+    if (!features.hasEmailJS) {
+      console.warn('EmailJS not configured, skipping booking confirmation email');
+      return false;
+    }
+
+    const serviceId = env.EMAILJS_SERVICE_ID;
+    const templateId = env.EMAILJS_TEMPLATE_BOOKING;
 
     const templateParams = {
       to_email: data.customer_email,
@@ -85,8 +93,13 @@ export const sendBookingConfirmation = async (data: BookingConfirmationData): Pr
  */
 export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
   try {
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_INVOICE;
+    if (!features.hasEmailJS) {
+      console.warn('EmailJS not configured, skipping invoice email');
+      return false;
+    }
+
+    const serviceId = env.EMAILJS_SERVICE_ID;
+    const templateId = env.EMAILJS_TEMPLATE_INVOICE;
 
     const templateParams = {
       to_email: data.customer_email,
@@ -118,8 +131,13 @@ export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
  */
 export const sendNewBookingAlert = async (data: NewBookingAlertData): Promise<boolean> => {
   try {
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_BOOKING; // REUSE booking template
+    if (!features.hasEmailJS) {
+      console.warn('EmailJS not configured, skipping booking alert email');
+      return false;
+    }
+
+    const serviceId = env.EMAILJS_SERVICE_ID;
+    const templateId = env.EMAILJS_TEMPLATE_BOOKING; // REUSE booking template
 
     const templateParams = {
       to_email: data.your_email, // Send to YOU instead of customer
