@@ -10,8 +10,6 @@ const LocalTargeting = lazy(() => import('../components/LocalTargeting'));
 const Testimonials = lazy(() => import('../components/Testimonials'));
 const FAQ = lazy(() => import('../components/FAQ'));
 const Contact = lazy(() => import('../components/Contact'));
-const AIChatbot = lazy(() => import('../components/AIChatbot'));
-const FloatingAvatar = lazy(() => import('../components/FloatingAvatar'));
 
 // Loading fallback component for lazy-loaded sections
 const SectionLoader = () => (
@@ -55,15 +53,6 @@ export default function HomePage() {
       </Suspense>
 
       <Footer />
-
-      {/* Lazy load interactive widgets */}
-      <Suspense fallback={null}>
-        <AIChatbot />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        <FloatingAvatar />
-      </Suspense>
     </div>
   );
 }

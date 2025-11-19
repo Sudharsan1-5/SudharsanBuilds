@@ -11,6 +11,10 @@ const TestimonialsPage = lazy(() => import('./pages/TestimonialsPage'));
 const FAQPage = lazy(() => import('./pages/FAQPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
+// ✅ FIX: Lazy load global widgets (available on all pages)
+const AIChatbot = lazy(() => import('./components/AIChatbot'));
+const FloatingAvatar = lazy(() => import('./components/FloatingAvatar'));
+
 // Loading fallback component for lazy-loaded pages
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -48,6 +52,15 @@ function App() {
               </Routes>
             </Suspense>
           </main>
+
+          {/* ✅ FIX: Global widgets available on all pages */}
+          <Suspense fallback={null}>
+            <AIChatbot />
+          </Suspense>
+
+          <Suspense fallback={null}>
+            <FloatingAvatar />
+          </Suspense>
         </div>
       </Router>
     </ErrorBoundary>

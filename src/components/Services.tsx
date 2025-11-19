@@ -1,6 +1,6 @@
 import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { initEmailJS } from '../services/emailService';
 import { generateAndSendInvoice } from '../services/invoiceService';
@@ -34,6 +34,10 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     projectDetails: ''
   });
 
+  // ✅ ACCESSIBILITY: Focus management for modal
+  const modalRef = useRef<HTMLDivElement>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
   // Initialize EmailJS on component mount
   useEffect(() => {
     initEmailJS();
@@ -64,6 +68,16 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
 
     loadRazorpay();
   }, []);
+
+  // ✅ ACCESSIBILITY: Focus first input when modal opens
+  useEffect(() => {
+    if (showBookingModal && firstInputRef.current) {
+      // Small delay to ensure modal is rendered
+      setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 100);
+    }
+  }, [showBookingModal]);
 
   const services: Service[] = [
     {

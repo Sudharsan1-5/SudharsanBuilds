@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from '@supabase/supabase-js';
 import { initEmailJS, sendContactFormEmail } from '../services/emailService';
 import { env } from '../utils/env';
+import { sanitizeFormData } from '../utils/sanitize';
 
 interface FormErrors {
   name?: string;
@@ -102,19 +103,22 @@ export default function Contact() {
     setStatus("sending");
 
     try {
-      // Store in Supabase
+      // ✅ SECURITY: Sanitize all user inputs before processing
+      const sanitizedData = sanitizeFormData(formData);
+
+      // Store in Supabase (using sanitized data)
       if (supabase) {
         const { error: supabaseError } = await supabase
           .from('inquiries')
           .insert([
             {
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              service: formData.service,
-              timeline: formData.timeline,
-              budget: formData.budget || null,
-              message: formData.message,
+              name: sanitizedData.name,
+              email: sanitizedData.email,
+              phone: sanitizedData.phone,
+              service: sanitizedData.service,
+              timeline: sanitizedData.timeline,
+              budget: sanitizedData.budget || null,
+              message: sanitizedData.message,
               created_at: new Date().toISOString()
             }
           ]);
@@ -124,13 +128,13 @@ export default function Contact() {
         }
       }
 
-      // Send via EmailJS (email notification)
+      // Send via EmailJS (email notification with sanitized data)
       const emailSent = await sendContactFormEmail({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        service: formData.service,
-        timeline: formData.timeline,
+        name: sanitizedData.name,
+        email: sanitizedData.email,
+        phone: sanitizedData.phone,
+        service: sanitizedData.service,
+        timeline: sanitizedData.timeline,
         budget: formData.budget,
         message: formData.message
       });
