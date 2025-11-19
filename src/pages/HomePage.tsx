@@ -45,7 +45,7 @@ export default function HomePage() {
       </Suspense>
 
       <Suspense fallback={<SectionLoader />}>
-        <FAQ limit={3} showViewAll={true} />
+        <FAQ limit={3} showViewAll={true} showContactCTA={false} />
       </Suspense>
 
       <Suspense fallback={<SectionLoader />}>

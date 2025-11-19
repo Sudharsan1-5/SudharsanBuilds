@@ -62,25 +62,28 @@ export default function WhyFreelance() {
   };
 
   return (
-    <section id="why-freelance" className="py-16 md:py-24 bg-gradient-to-b from-white to-slate-50">
+    <section id="why-freelance" className="py-20 md:py-28 bg-gradient-to-b from-white to-slate-50 border-t-2 border-slate-200/50">
       <div className="container mx-auto px-4 md:px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-12 md:mb-16"
+          className="text-center mb-10 md:mb-16"
         >
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Users className="w-8 h-8 text-cyan-600" />
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900">
-              Why Choose a <span className="text-cyan-600">Freelance Developer?</span>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 mb-3 md:mb-4">
+            <Users className="w-7 h-7 md:w-8 md:h-8 text-cyan-600 flex-shrink-0" />
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 leading-tight">
+              Why Choose a <span className="text-cyan-600 block sm:inline">Freelance Developer?</span>
             </h2>
           </div>
-          <p className="text-xl md:text-2xl text-slate-700 max-w-3xl mx-auto mt-4">
-            Work directly with an <strong>indie developer</strong> serving clients across India
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-slate-700 max-w-3xl mx-auto mt-3 md:mt-4 px-4 leading-relaxed">
+            Work directly with an <strong>indie developer</strong>
+            <br className="sm:hidden" />
+            <span className="hidden sm:inline"> </span>
+            serving clients across India
           </p>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto mt-2">
+          <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-2xl mx-auto mt-2 md:mt-3 px-4">
             Professional websites at affordable prices with personalized service
           </p>
         </motion.div>
