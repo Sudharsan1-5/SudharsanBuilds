@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Mail, Send, Github, Linkedin, Twitter, AlertCircle, Phone } from 'lucide-react';
+import { Mail, Send, Github, Linkedin, Twitter, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from '@supabase/supabase-js';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import { initEmailJS, sendContactFormEmail } from '../services/emailService';
 import { env } from '../utils/env';
+import { sanitizeFormData } from '../utils/sanitize';
 
 interface FormErrors {
   name?: string;
@@ -57,10 +60,10 @@ export default function Contact() {
       newErrors.email = "Please enter a valid email";
     }
 
-    // Phone validation (International + Indian format) - OPTIONAL
-    const phoneRegex = /^(\+?\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/;
-    if (formData.phone.trim() && !phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-      newErrors.phone = "Please enter a valid phone number (international or Indian format)";
+    // Phone validation (International format via react-phone-number-input) - OPTIONAL
+    // The library handles validation internally, but we check if it's provided
+    if (formData.phone.trim() && formData.phone.length < 8) {
+      newErrors.phone = "Please enter a valid international phone number";
     }
 
     // Service validation
@@ -102,19 +105,22 @@ export default function Contact() {
     setStatus("sending");
 
     try {
-      // Store in Supabase
+      // ✅ SECURITY: Sanitize all user inputs before processing
+      const sanitizedData = sanitizeFormData(formData);
+
+      // Store in Supabase (using sanitized data)
       if (supabase) {
         const { error: supabaseError } = await supabase
           .from('inquiries')
           .insert([
             {
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              service: formData.service,
-              timeline: formData.timeline,
-              budget: formData.budget || null,
-              message: formData.message,
+              name: sanitizedData.name,
+              email: sanitizedData.email,
+              phone: sanitizedData.phone,
+              service: sanitizedData.service,
+              timeline: sanitizedData.timeline,
+              budget: sanitizedData.budget || null,
+              message: sanitizedData.message,
               created_at: new Date().toISOString()
             }
           ]);
@@ -124,13 +130,13 @@ export default function Contact() {
         }
       }
 
-      // Send via EmailJS (email notification)
+      // Send via EmailJS (email notification with sanitized data)
       const emailSent = await sendContactFormEmail({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        service: formData.service,
-        timeline: formData.timeline,
+        name: sanitizedData.name,
+        email: sanitizedData.email,
+        phone: sanitizedData.phone,
+        service: sanitizedData.service,
+        timeline: sanitizedData.timeline,
         budget: formData.budget,
         message: formData.message
       });
@@ -286,22 +292,26 @@ export default function Contact() {
               <label htmlFor="phone" className="block text-slate-700 font-semibold mb-2 text-sm md:text-base">
                 Phone Number (Optional)
               </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  aria-invalid={!!errors.phone}
-                  aria-describedby={errors.phone ? "phone-error" : undefined}
-                  className={`w-full pl-10 pr-3 py-2.5 md:px-4 md:py-3 md:pl-10 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all text-sm md:text-base ${
+              <PhoneInput
+                international
+                defaultCountry="IN"
+                value={formData.phone}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value || '' }))}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? "phone-error" : undefined}
+                className={`w-full ${
+                  errors.phone ? '[&>input]:border-red-500 [&>input]:focus:ring-red-500' : '[&>input]:border-slate-300 [&>input]:focus:ring-cyan-500'
+                }`}
+                style={{
+                  '--PhoneInputCountryFlag-height': '1em',
+                  '--PhoneInput-color--focus': '#06b6d4',
+                } as React.CSSProperties}
+                numberInputProps={{
+                  className: `w-full px-4 py-2.5 md:py-3 border rounded-lg focus:outline-none focus:ring-2 focus:border-transparent transition-all text-sm md:text-base ${
                     errors.phone ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-cyan-500'
-                  }`}
-                  placeholder="+91 98765 43210"
-                />
-              </div>
+                  }`
+                }}
+              />
               {errors.phone && (
                 <p id="phone-error" className="text-red-500 text-xs mt-1 flex items-center gap-1">
                   <AlertCircle className="w-3 h-3" /> {errors.phone}

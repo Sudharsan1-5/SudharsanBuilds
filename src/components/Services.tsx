@@ -1,7 +1,9 @@
 import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 import { initEmailJS } from '../services/emailService';
 import { generateAndSendInvoice } from '../services/invoiceService';
 import { env, features } from '../utils/env';
@@ -34,6 +36,10 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     projectDetails: ''
   });
 
+  // ✅ ACCESSIBILITY: Focus management for modal
+  const modalRef = useRef<HTMLDivElement>(null);
+  const firstInputRef = useRef<HTMLInputElement>(null);
+
   // Initialize EmailJS on component mount
   useEffect(() => {
     initEmailJS();
@@ -64,6 +70,16 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
 
     loadRazorpay();
   }, []);
+
+  // ✅ ACCESSIBILITY: Focus first input when modal opens
+  useEffect(() => {
+    if (showBookingModal && firstInputRef.current) {
+      // Small delay to ensure modal is rendered
+      setTimeout(() => {
+        firstInputRef.current?.focus();
+      }, 100);
+    }
+  }, [showBookingModal]);
 
   const services: Service[] = [
     {
@@ -254,10 +270,9 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       return;
     }
 
-    // Validate phone format (international + Indian)
-    const phoneRegex = /^(\+?\d{1,3})?[-.\s]?(\(?\d{1,4}\)?)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}$/;
-    if (!phoneRegex.test(customerDetails.phone.replace(/\s/g, ''))) {
-      alert('Please enter a valid phone number (international or Indian format)');
+    // Validate phone format (international - handled by PhoneInput library)
+    if (customerDetails.phone.length < 8) {
+      alert('Please enter a valid international phone number');
       return;
     }
 
@@ -540,48 +555,52 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
           </motion.div>
         )}
 
-        {/* Trust Indicators */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-16 text-center"
-        >
-          <div className="flex flex-wrap justify-center gap-6 md:gap-8">
-            <div className="flex items-center gap-2 text-slate-700">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
+        {/* Trust Indicators - Only show on dedicated Services page */}
+        {showAll && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mt-16 text-center"
+            >
+              <div className="flex flex-wrap justify-center gap-6 md:gap-8">
+                <div className="flex items-center gap-2 text-slate-700">
+                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  </div>
+                  <span className="font-semibold">100% Money Back Guarantee</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <span className="font-semibold">Fast Delivery</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-700">
+                  <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+                    <Code2 className="w-6 h-6 text-cyan-600" />
+                  </div>
+                  <span className="font-semibold">100% Remote Work</span>
+                </div>
               </div>
-              <span className="font-semibold">100% Money Back Guarantee</span>
-            </div>
-            <div className="flex items-center gap-2 text-slate-700">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                <Clock className="w-6 h-6 text-blue-600" />
-              </div>
-              <span className="font-semibold">Fast Delivery</span>
-            </div>
-            <div className="flex items-center gap-2 text-slate-700">
-              <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
-                <Code2 className="w-6 h-6 text-cyan-600" />
-              </div>
-              <span className="font-semibold">100% Remote Work</span>
-            </div>
-          </div>
-        </motion.div>
+            </motion.div>
 
-        {/* Payment Note */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mt-12 text-center"
-        >
-          <p className="text-sm text-slate-600">
-            <strong>Secure payments via Razorpay</strong> - UPI, Cards, Net Banking accepted.
-            <br />
-            Can't pay deposit now? <a href="#contact" className="text-cyan-600 hover:underline">Contact me</a> to discuss your project first.
-          </p>
-        </motion.div>
+            {/* Payment Note */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="mt-12 text-center"
+            >
+              <p className="text-sm text-slate-600">
+                <strong>Secure payments via Razorpay</strong> - UPI, Cards, Net Banking accepted.
+                <br />
+                Can't pay deposit now? <a href="#contact" className="text-cyan-600 hover:underline">Contact me</a> to discuss your project first.
+              </p>
+            </motion.div>
+          </>
+        )}
       </div>
 
       {/* Booking Modal */}
@@ -661,14 +680,20 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
                   <label htmlFor="modal-phone" className="block text-slate-700 font-semibold mb-2">
                     Phone Number *
                   </label>
-                  <input
-                    type="tel"
-                    id="modal-phone"
+                  <PhoneInput
+                    international
+                    defaultCountry="IN"
                     value={customerDetails.phone}
-                    onChange={(e) => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                    placeholder="+91 98765 43210"
-                    required
+                    onChange={(value) => setCustomerDetails({ ...customerDetails, phone: value || '' })}
+                    className="w-full"
+                    style={{
+                      '--PhoneInputCountryFlag-height': '1em',
+                      '--PhoneInput-color--focus': '#06b6d4',
+                    } as React.CSSProperties}
+                    numberInputProps={{
+                      className: 'w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500',
+                      required: true
+                    }}
                   />
                 </div>
 
