@@ -11,9 +11,10 @@ interface FAQItem {
 interface FAQProps {
   limit?: number | null;
   showViewAll?: boolean;
+  showContactCTA?: boolean;
 }
 
-export default function FAQ({ limit = null, showViewAll = false }: FAQProps) {
+export default function FAQ({ limit = null, showViewAll = false, showContactCTA = true }: FAQProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs: FAQItem[] = [
@@ -72,7 +73,7 @@ export default function FAQ({ limit = null, showViewAll = false }: FAQProps) {
   };
 
   return (
-    <section id="faq" className="py-16 md:py-24 bg-white">
+    <section id="faq" className="py-20 md:py-28 bg-gradient-to-b from-slate-50 to-white border-t-2 border-slate-200/50">
       <div className="container mx-auto px-4 md:px-6">
         {/* Header */}
         <motion.div
@@ -154,30 +155,32 @@ export default function FAQ({ limit = null, showViewAll = false }: FAQProps) {
           </div>
         )}
 
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mt-12"
-        >
-          <p className="text-lg text-slate-600 mb-4">
-            Still have questions?
-          </p>
-          <a
-            href="#contact"
-            onClick={(e) => {
-              e.preventDefault();
-              const contactSection = document.getElementById('contact');
-              if (contactSection) {
-                contactSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+        {/* CTA - Only show on dedicated FAQ page */}
+        {showContactCTA && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
           >
-            Contact Me
-          </a>
-        </motion.div>
+            <p className="text-lg text-slate-600 mb-4">
+              Still have questions?
+            </p>
+            <a
+              href="#contact"
+              onClick={(e) => {
+                e.preventDefault();
+                const contactSection = document.getElementById('contact');
+                if (contactSection) {
+                  contactSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              Contact Me
+            </a>
+          </motion.div>
+        )}
       </div>
     </section>
   );

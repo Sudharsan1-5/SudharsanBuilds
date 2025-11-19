@@ -11,9 +11,15 @@ import { motion } from 'framer-motion';
  * - Returns smoothly to its original position when mouse moves far
  * - Has reactive eyes that follow the cursor
  * - Has a subtle idle floating animation
+ * - Clickable to open AI chat
  * - Optimized for performance using requestAnimationFrame
  */
-const FloatingAvatar: FC = () => {
+
+interface FloatingAvatarProps {
+    onClick?: () => void;
+}
+
+const FloatingAvatar: FC<FloatingAvatarProps> = ({ onClick }) => {
     // State for avatar position offset (repel effect)
     const [position, setPosition] = useState({ x: 0, y: 0 });
     // State for eye rotation (eye-tracking effect)
@@ -106,7 +112,8 @@ const FloatingAvatar: FC = () => {
     return (
         <motion.div
             ref={avatarRef}
-            className="fixed bottom-8 right-8 z-50 pointer-events-none select-none"
+            onClick={onClick}
+            className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 cursor-pointer select-none"
             style={{
                 // Apply the repel offset using CSS transform for best performance
                 transform: `translate(${position.x}px, ${position.y}px)`,
@@ -121,10 +128,12 @@ const FloatingAvatar: FC = () => {
                 repeat: Infinity,
                 ease: "easeInOut",
             }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
         >
             {/* Avatar Container with background and glow effect */}
             <motion.div
-                className="relative w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 backdrop-blur-sm border-2 border-cyan-400/30 shadow-lg flex items-center justify-center"
+                className="relative w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-600/20 backdrop-blur-sm border-2 border-cyan-400/30 shadow-lg flex items-center justify-center"
                 // Subtle rotation animation
                 animate={{
                     rotate: [0, 5, -5, 0],
@@ -141,8 +150,8 @@ const FloatingAvatar: FC = () => {
             >
                 {/* Bot Icon (Background) */}
                 <Bot
-                    size={48}
-                    className="text-slate-700/60 drop-shadow-lg"
+                    size={40}
+                    className="text-slate-700/60 drop-shadow-lg md:w-12 md:h-12"
                     strokeWidth={1.5}
                 />
 

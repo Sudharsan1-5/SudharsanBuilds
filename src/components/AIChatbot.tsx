@@ -17,12 +17,24 @@ interface ChatState {
   isMinimized: boolean;
 }
 
-export default function AIChatbot() {
+interface AIChatbotProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
   const [chatState, setChatState] = useState<ChatState>({
     isOpen: false,
     isWelcome: true,
     isMinimized: false,
   });
+
+  // Sync external isOpen prop with internal state
+  useEffect(() => {
+    if (isOpen && !chatState.isOpen) {
+      setChatState(prev => ({ ...prev, isOpen: true }));
+    }
+  }, [isOpen, chatState.isOpen]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,20 +48,13 @@ export default function AIChatbot() {
     scrollToBottom();
   }, [messages]);
 
-  const handleOpenChat = () => {
-    setChatState({
-      isOpen: true,
-      isWelcome: true,
-      isMinimized: false,
-    });
-  };
-
   const handleCloseChat = () => {
     setChatState({
       isOpen: false,
       isWelcome: true,
       isMinimized: false,
     });
+    onClose(); // Notify parent component
   };
 
   const handleStartChat = () => {
@@ -139,64 +144,6 @@ export default function AIChatbot() {
 
   return (
     <>
-      <AnimatePresence>
-        {!chatState.isOpen && (
-          <motion.button
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            onClick={handleOpenChat}
-            className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-40 w-16 h-16 md:w-20 md:h-20 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110"
-            style={{
-              background: 'linear-gradient(135deg, #0891b2 0%, #0284c7 50%, #0369a1 100%)',
-              boxShadow: '0 20px 50px rgba(8, 145, 178, 0.4), 0 0 60px rgba(8, 145, 178, 0.2)',
-            }}
-          >
-            <motion.div
-              animate={{
-                boxShadow: [
-                  '0 0 20px rgba(8, 145, 178, 0.5)',
-                  '0 0 40px rgba(8, 145, 178, 0.8)',
-                  '0 0 20px rgba(8, 145, 178, 0.5)',
-                ],
-              }}
-              transition={{ duration: 2.5, repeat: Infinity }}
-              className="absolute inset-0 rounded-full"
-            />
-
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
-              className="absolute inset-0 rounded-full border border-transparent"
-              style={{
-                borderImage: 'linear-gradient(135deg, transparent, rgba(255,255,255,0.3), transparent) 1',
-              }}
-            />
-
-            <div className="relative flex flex-col items-center justify-center">
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              >
-                <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-white" />
-              </motion.div>
-              <span className="text-xs font-bold text-white mt-1">Elite AI</span>
-            </div>
-
-            <motion.div
-              animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-400 rounded-full shadow-lg"
-            />
-            <motion.div
-              animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
-              transition={{ duration: 2, repeat: Infinity, delay: 0.3 }}
-              className="absolute -bottom-1 -right-1 w-3 h-3 bg-cyan-300 rounded-full shadow-lg"
-            />
-          </motion.button>
-        )}
-      </AnimatePresence>
-
       <AnimatePresence>
         {chatState.isOpen && (
           <motion.div

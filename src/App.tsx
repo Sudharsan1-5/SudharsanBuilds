@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import Navigation from './components/Navigation';
 import ErrorBoundary from './components/ErrorBoundary';
 
@@ -26,6 +26,11 @@ const PageLoader = () => (
 );
 
 function App() {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const handleOpenChat = () => setIsChatOpen(true);
+  const handleCloseChat = () => setIsChatOpen(false);
+
   return (
     <ErrorBoundary>
       <Router>
@@ -53,14 +58,17 @@ function App() {
             </Suspense>
           </main>
 
-          {/* ✅ FIX: Global widgets available on all pages */}
+          {/* ✅ AI Chat - Global widget available on all pages */}
           <Suspense fallback={null}>
-            <AIChatbot />
+            <AIChatbot isOpen={isChatOpen} onClose={handleCloseChat} />
           </Suspense>
 
-          <Suspense fallback={null}>
-            <FloatingAvatar />
-          </Suspense>
+          {/* ✅ Floating Avatar - Clickable to open AI chat */}
+          {!isChatOpen && (
+            <Suspense fallback={null}>
+              <FloatingAvatar onClick={handleOpenChat} />
+            </Suspense>
+          )}
         </div>
       </Router>
     </ErrorBoundary>
