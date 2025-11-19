@@ -33,24 +33,30 @@ export default function Navigation() {
       // If we're not on the homepage, navigate there first
       if (location.pathname !== '/') {
         navigate('/');
-        // Wait for navigation and lazy-loaded components to render (800ms for Suspense)
+        // Optimized timing: 500ms is enough for lazy components to load while feeling responsive
         setTimeout(() => {
+          requestAnimationFrame(() => {
+            const element = document.querySelector(href);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        }, 500);
+      } else {
+        // Already on homepage, scroll immediately with requestAnimationFrame for smoothness
+        requestAnimationFrame(() => {
           const element = document.querySelector(href);
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-        }, 800);
-      } else {
-        // Already on homepage, just scroll
-        const element = document.querySelector(href);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+        });
       }
     } else {
       // Page navigation
       navigate(href);
-      window.scrollTo(0, 0);
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
     }
   };
 

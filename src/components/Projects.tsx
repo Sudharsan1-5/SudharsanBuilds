@@ -322,41 +322,41 @@ export default function Projects() {
   };
 
   return (
-    <section id="projects" className="py-16 md:py-24 bg-slate-900">
+    <section id="projects" className="py-12 md:py-24 bg-slate-900">
       <div className="container mx-auto px-4 md:px-6">
-        <div className="text-center mb-12 md:mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
+        <div className="text-center mb-6 md:mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold text-white mb-2 md:mb-4">
             Featured <span className="text-cyan-400">Projects</span>
           </h2>
-          <p className="text-slate-400 max-w-2xl mx-auto">
+          <p className="text-slate-400 text-sm md:text-base max-w-2xl mx-auto">
             Explore my work across personal projects and client collaborations
           </p>
         </div>
 
-        {/* Two Main Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
+        {/* Two Main Cards - Compact for Mobile */}
+        <div className="grid grid-cols-2 gap-3 md:gap-8 max-w-4xl mx-auto">
           {/* My Projects Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="group bg-gradient-to-br from-cyan-600 to-blue-700 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-cyan-400"
+            className="group bg-gradient-to-br from-cyan-600 to-blue-700 p-4 md:p-12 rounded-2xl md:rounded-3xl shadow-2xl hover:shadow-cyan-500/50 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-cyan-400"
             onClick={() => openCategoryModal('My Projects')}
           >
-            <div className="flex flex-col items-center text-center space-y-6">
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <FolderOpen className="w-10 h-10 md:w-12 md:h-12 text-white" />
+            <div className="flex flex-col items-center text-center space-y-2 md:space-y-6">
+              <div className="w-12 h-12 md:w-24 md:h-24 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <FolderOpen className="w-6 h-6 md:w-12 md:h-12 text-white" />
               </div>
               <div>
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <h3 className="text-base md:text-3xl font-bold text-white mb-1 md:mb-2">
                   My Projects
                 </h3>
-                <p className="text-cyan-100 text-sm md:text-base mb-4">
+                <p className="text-cyan-100 text-xs md:text-base mb-2 md:mb-4 hidden md:block">
                   Personal & portfolio websites built for professionals
                 </p>
-                <div className="inline-flex items-center gap-2 text-white font-semibold bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                <div className="inline-flex items-center gap-1 md:gap-2 text-white text-xs md:text-base font-semibold bg-white/10 backdrop-blur-sm px-2 md:px-4 py-1 md:py-2 rounded-full">
                   <span>{myProjects.length} Projects</span>
-                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="w-3 h-3 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </div>
@@ -368,23 +368,23 @@ export default function Projects() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="group bg-gradient-to-br from-purple-600 to-pink-700 p-8 md:p-12 rounded-3xl shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-purple-400"
+            className="group bg-gradient-to-br from-purple-600 to-pink-700 p-4 md:p-12 rounded-2xl md:rounded-3xl shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:-translate-y-2 cursor-pointer border-2 border-purple-400"
             onClick={() => openCategoryModal('Client Projects')}
           >
-            <div className="flex flex-col items-center text-center space-y-6">
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Briefcase className="w-10 h-10 md:w-12 md:h-12 text-white" />
+            <div className="flex flex-col items-center text-center space-y-2 md:space-y-6">
+              <div className="w-12 h-12 md:w-24 md:h-24 bg-white/20 backdrop-blur-sm rounded-xl md:rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Briefcase className="w-6 h-6 md:w-12 md:h-12 text-white" />
               </div>
               <div>
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                <h3 className="text-base md:text-3xl font-bold text-white mb-1 md:mb-2">
                   Client Projects
                 </h3>
-                <p className="text-purple-100 text-sm md:text-base mb-4">
+                <p className="text-purple-100 text-xs md:text-base mb-2 md:mb-4 hidden md:block">
                   Business websites & e-commerce solutions for clients
                 </p>
-                <div className="inline-flex items-center gap-2 text-white font-semibold bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
+                <div className="inline-flex items-center gap-1 md:gap-2 text-white text-xs md:text-base font-semibold bg-white/10 backdrop-blur-sm px-2 md:px-4 py-1 md:py-2 rounded-full">
                   <span>{clientProjects.length} Projects</span>
-                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  <ChevronRight className="w-3 h-3 md:w-5 md:h-5 group-hover:translate-x-1 transition-transform" />
                 </div>
               </div>
             </div>

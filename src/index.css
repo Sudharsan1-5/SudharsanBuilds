@@ -29,16 +29,25 @@
 
 /* ========== Mobile-First Performance Optimizations ========== */
 
-/* Disable animations on mobile for better performance */
+/* Smooth scroll for all devices - Better UX */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Optimize animations on mobile for better performance while keeping smoothness */
 @media (max-width: 768px) {
   * {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0.3s !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    transition-duration: 0.15s !important;
   }
 
-  /* Re-enable critical transitions on mobile */
+  /* Keep smooth scrolling on mobile */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Re-enable critical transitions on mobile with optimal duration */
   button, a, [role="button"] {
     transition-duration: 0.2s !important;
   }

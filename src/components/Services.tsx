@@ -1,6 +1,7 @@
-import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, ChevronDown, ChevronUp, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '../hooks/useMobile';
 import { initEmailJS } from '../services/emailService';
 import { generateAndSendInvoice } from '../services/invoiceService';
@@ -20,9 +21,9 @@ interface Service {
   popular?: boolean;
 }
 
-export default function Services() {
+export default function Services({ showAll = false }: { showAll?: boolean }) {
+  const navigate = useNavigate();
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
-  const [showAllServices, setShowAllServices] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
@@ -367,7 +368,7 @@ export default function Services() {
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {services
-            .slice(0, isMobile && !showAllServices ? 4 : services.length)
+            .slice(0, showAll ? services.length : 2)
             .map((service, index) => (
             <motion.div
               key={index}
@@ -451,45 +452,22 @@ export default function Services() {
           ))}
         </div>
 
-        {/* View All Services Button - Mobile Only */}
-        {!showAllServices && services.length > 4 && (
+        {/* View All Services Button - Contrasting Color */}
+        {!showAll && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mt-8 md:hidden flex justify-center"
+            className="mt-12 flex justify-center"
           >
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowAllServices(true)}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-500/50 transition-all"
+              onClick={() => navigate('/services')}
+              className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-lg rounded-2xl shadow-2xl hover:shadow-orange-500/50 transition-all border-2 border-orange-400"
             >
-              View All {services.length} Services
-              <ChevronDown className="w-5 h-5" />
-            </motion.button>
-          </motion.div>
-        )}
-
-        {/* Show Less Button - Mobile Only */}
-        {showAllServices && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 md:hidden flex justify-center"
-          >
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setShowAllServices(false);
-                // Scroll back to services section
-                document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-slate-600 to-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-slate-500/50 transition-all"
-            >
-              Show Less
-              <ChevronUp className="w-5 h-5" />
+              View All {services.length} Services & Pricing
+              <ArrowRight className="w-6 h-6" />
             </motion.button>
           </motion.div>
         )}

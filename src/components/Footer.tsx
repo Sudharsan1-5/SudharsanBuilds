@@ -10,19 +10,23 @@ export default function Footer() {
     // If not on homepage, navigate first then scroll
     if (location.pathname !== '/') {
       navigate('/');
-      // Wait for navigation and lazy-loaded components to render
+      // Optimized timing: 500ms is enough for lazy components to load while feeling responsive
       setTimeout(() => {
+        requestAnimationFrame(() => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      }, 500);
+    } else {
+      // Already on homepage, scroll immediately with requestAnimationFrame for smoothness
+      requestAnimationFrame(() => {
         const element = document.getElementById(id);
         if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 800);
-    } else {
-      // Already on homepage, just scroll
-      const element = document.getElementById(id);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      });
     }
   };
 

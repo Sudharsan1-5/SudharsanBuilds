@@ -9,7 +9,7 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen pt-20">
-      <Services limit={null} showViewAll={false} />
+      <Services showAll={true} />
       <Footer />
     </div>
   );
