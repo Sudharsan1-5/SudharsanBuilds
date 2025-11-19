@@ -35,7 +35,7 @@ export default function HomePage() {
       </Suspense>
 
       <Suspense fallback={<SectionLoader />}>
-        <Services limit={2} showViewAll={true} />
+        <Services showAll={false} />
       </Suspense>
 
       <Suspense fallback={<SectionLoader />}>

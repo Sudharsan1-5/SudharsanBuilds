@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, FC } from 'react';
-import { Github, Linkedin, Mail, Twitter, ArrowDown, Sparkles } from 'lucide-react';
+import { Github, Linkedin, Mail, Twitter, ArrowDown, Sparkles, Calendar } from 'lucide-react';
 import { motion, useSpring, useReducedMotion } from "framer-motion";
+import { useNavigate } from 'react-router-dom';
 
 // --- 1. TYPES ---
 type MousePosition = { x: number; y: number };
@@ -113,6 +114,7 @@ const GenerativeGrid: FC<{ isMobile: boolean }> = ({ isMobile }) => {
 
 // --- 5. Hero Component (The main showpiece - Mobile-Optimized) ---
 const Hero: FC = () => {
+    const navigate = useNavigate();
     const scrollToSection = useSmoothScroll();
     const heroRef = useRef<HTMLElement>(null);
 
@@ -323,18 +325,39 @@ const Hero: FC = () => {
                         </motion.a>
                     </motion.div>
 
-                    {/* Hire Me Button - Enhanced with better styling and mobile optimization */}
+                    {/* CTA Buttons - Book Now + Let's Work Together */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: isMobile ? 0.3 : 0.7, duration: isMobile ? 0.4 : 0.8 }}
-                        className="pt-8 sm:pt-12 px-4"
+                        className={`pt-8 sm:pt-12 px-4 flex flex-col sm:flex-row items-center justify-center gap-4 ${
+                            isMobile ? 'w-full max-w-md mx-auto' : ''
+                        }`}
                     >
+                        {/* Book Now Button - Primary CTA */}
+                        <motion.button
+                            onClick={() => navigate('/services')}
+                            className={`inline-flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-full font-bold tracking-wide shadow-2xl shadow-orange-500/50 border-2 border-orange-400 touch-target ${
+                                isMobile ? 'w-full px-8 py-4 text-base' : 'px-12 py-5 text-lg'
+                            }`}
+                            whileHover={!isMobile ? {
+                                scale: 1.08,
+                                y: -3,
+                                boxShadow: "0 0 45px rgba(249, 115, 22, 0.9), 0 10px 30px rgba(249, 115, 22, 0.4)",
+                            } : {}}
+                            whileTap={{ scale: 0.96 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                        >
+                            <Calendar size={isMobile ? 18 : 20} />
+                            Book Now
+                        </motion.button>
+
+                        {/* Let's Work Together Button - Secondary CTA */}
                         <motion.a
                             href="#contact"
                             onClick={scrollToSection}
-                            className={`inline-flex items-center gap-2 bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-600 text-white rounded-full font-bold tracking-wide shadow-xl shadow-cyan-500/40 border border-cyan-400/20 touch-target ${
-                                isMobile ? 'px-8 py-4 text-base' : 'px-14 py-6 text-xl'
+                            className={`inline-flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-600 text-white rounded-full font-bold tracking-wide shadow-xl shadow-cyan-500/40 border border-cyan-400/20 touch-target ${
+                                isMobile ? 'w-full px-8 py-4 text-base' : 'px-12 py-5 text-lg'
                             }`}
                             whileHover={!isMobile ? {
                                 scale: 1.08,
@@ -344,24 +367,29 @@ const Hero: FC = () => {
                             whileTap={{ scale: 0.96 }}
                             transition={{ type: "spring", stiffness: 400, damping: 15 }}
                         >
-                            <Sparkles size={isMobile ? 18 : 24} className={isMobile ? '' : 'animate-pulse'} />
+                            <Sparkles size={isMobile ? 18 : 20} />
                             Let's Work Together
-                            <Sparkles size={isMobile ? 18 : 24} className={isMobile ? '' : 'animate-pulse'} />
                         </motion.a>
                     </motion.div>
                 </div>
             </div>
             
-            {/* Scroll Down Visual Cue - Enhanced and Mobile-Optimized */}
+            {/* Scroll Down Visual Cue - Clean and Prominent */}
             <motion.div
-                className="absolute bottom-8 sm:bottom-12 left-1/2 transform -translate-x-1/2 z-20 cursor-pointer touch-target"
-                initial={{ y: 0, opacity: 0 }}
-                animate={isMobile ? { opacity: 0.7 } : { y: [0, 12, 0], opacity: [0.5, 1, 0.5] }}
-                transition={isMobile ? {} : {
-                    duration: 2.5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 1.5
+                className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20 cursor-pointer"
+                initial={{ opacity: 0 }}
+                animate={{
+                    opacity: 1,
+                    y: [0, 10, 0]
+                }}
+                transition={{
+                    opacity: { delay: 1, duration: 0.5 },
+                    y: {
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                        delay: 1.5
+                    }
                 }}
                 onClick={() => {
                     const aboutSection = document.getElementById('about');
@@ -370,9 +398,9 @@ const Hero: FC = () => {
                     }
                 }}
             >
-                <div className="flex flex-col items-center gap-1">
-                    <ArrowDown size={isMobile ? 28 : 36} className={`text-cyan-400 ${isMobile ? '' : 'drop-shadow-[0_0_15px_rgba(34,211,238,0.8)]'}`} />
-                    <span className="text-xs text-cyan-400/80 font-medium">Scroll to explore</span>
+                <div className="flex flex-col items-center gap-2 bg-slate-800/40 backdrop-blur-sm px-4 py-3 rounded-2xl border border-cyan-500/30 hover:border-cyan-400/60 transition-all">
+                    <span className="text-xs text-cyan-400 font-semibold uppercase tracking-wider">Explore</span>
+                    <ArrowDown size={24} className="text-cyan-400" />
                 </div>
             </motion.div>
         </section>

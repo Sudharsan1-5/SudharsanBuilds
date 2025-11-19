@@ -138,17 +138,17 @@ export default function FAQ({ limit = null, showViewAll = false }: FAQProps) {
           ))}
         </div>
 
-        {/* View All Button */}
+        {/* View All Button - Contrasting Color */}
         {showViewAll && limit && faqs.length > limit && (
           <div className="text-center mb-12">
             <Link to="/faq">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-500/50 transition-all"
+                className="inline-flex items-center gap-3 px-10 py-5 bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold text-lg rounded-2xl shadow-2xl hover:shadow-orange-500/50 transition-all border-2 border-orange-400"
               >
                 View All FAQs
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-6 h-6" />
               </motion.button>
             </Link>
           </div>
