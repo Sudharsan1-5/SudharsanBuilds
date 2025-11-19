@@ -52,6 +52,7 @@ interface NewBookingAlertData {
 
 /**
  * Send booking confirmation email to customer
+ * Uses the booking_confirm template
  */
 export const sendBookingConfirmation = async (data: BookingConfirmationData): Promise<boolean> => {
   try {
@@ -80,6 +81,7 @@ export const sendBookingConfirmation = async (data: BookingConfirmationData): Pr
 
 /**
  * Send invoice email to customer
+ * Uses the invoice template
  */
 export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
   try {
@@ -111,24 +113,24 @@ export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
 
 /**
  * Send new booking alert to owner
+ * REUSES the booking_confirm template but sends to owner instead
+ * FREE PLAN WORKAROUND: Uses same template as booking confirmation
  */
 export const sendNewBookingAlert = async (data: NewBookingAlertData): Promise<boolean> => {
   try {
     const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ALERT;
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_BOOKING; // REUSE booking template
 
     const templateParams = {
-      to_email: data.your_email,
-      customer_name: data.customer_name,
+      to_email: data.your_email, // Send to YOU instead of customer
+      customer_name: `🔔 NEW BOOKING: ${data.customer_name}`,
       customer_phone: data.customer_phone,
-      customer_email: data.customer_email,
-      service_type: data.service_type,
+      service_type: `${data.service_type} | Contact: ${data.customer_email}`,
       amount: `₹${data.amount.toLocaleString('en-IN')}`,
-      deposit_amount: `₹${data.deposit_amount.toLocaleString('en-IN')}`,
-      project_details: data.project_details,
-      timeline: data.timeline,
-      payment_status: data.payment_status,
+      deposit_amount: `₹${data.deposit_amount.toLocaleString('en-IN')} (${data.payment_status})`,
+      timeline: `${data.timeline} | Details: ${data.project_details}`,
       whatsapp_link: data.whatsapp_link,
+      your_email: data.customer_email, // Show customer email in template
     };
 
     const response = await emailjs.send(serviceId, templateId, templateParams);
@@ -140,7 +142,9 @@ export const sendNewBookingAlert = async (data: NewBookingAlertData): Promise<bo
 };
 
 /**
- * Send simple contact form email (replaces Formspree)
+ * Contact form email - DISABLED for FREE plan
+ * Data is still saved to Supabase, you can check there
+ * To enable: upgrade to EmailJS Personal plan and create contact_form template
  */
 export const sendContactFormEmail = async (formData: {
   name: string;
@@ -151,26 +155,8 @@ export const sendContactFormEmail = async (formData: {
   budget?: string;
   message: string;
 }): Promise<boolean> => {
-  try {
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_CONTACT;
-    const yourEmail = import.meta.env.VITE_YOUR_EMAIL || 'sudharsanofficial0001@gmail.com';
-
-    const templateParams = {
-      to_email: yourEmail,
-      from_name: formData.name,
-      from_email: formData.email,
-      phone: formData.phone || 'Not provided',
-      service: formData.service,
-      timeline: formData.timeline,
-      budget: formData.budget || 'Not specified',
-      message: formData.message,
-    };
-
-    const response = await emailjs.send(serviceId, templateId, templateParams);
-    return response.status === 200;
-  } catch (error) {
-    console.error('Error sending contact form email:', error);
-    return false;
-  }
+  // Skip email sending for FREE plan
+  // Data is already saved in Supabase
+  console.log('Contact form email skipped (FREE plan). Check Supabase for inquiry data.');
+  return true; // Return true so form still works
 };
