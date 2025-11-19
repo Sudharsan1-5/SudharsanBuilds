@@ -1,10 +1,13 @@
 import emailjs from '@emailjs/browser';
+import { env, features } from '../utils/env';
 
 // Initialize EmailJS with public key
 export const initEmailJS = () => {
-  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
-  if (publicKey) {
-    emailjs.init(publicKey);
+  if (features.hasEmailJS && env.EMAILJS_PUBLIC_KEY) {
+    emailjs.init(env.EMAILJS_PUBLIC_KEY);
+    console.log('✅ EmailJS initialized successfully');
+  } else {
+    console.warn('⚠️ EmailJS not configured - email notifications will be skipped');
   }
 };
 
@@ -36,14 +39,33 @@ interface InvoiceData {
   upi_id: string;
 }
 
+interface NewBookingAlertData {
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  service_type: string;
+  amount: number;
+  deposit_amount: number;
+  project_details: string;
+  timeline: string;
+  payment_status: string;
+  whatsapp_link: string;
+  your_email: string;
+}
+
 /**
  * Send booking confirmation email to customer
- * Uses the booking_confirm template (template_93arapj)
+ * Uses the booking_confirm template
  */
 export const sendBookingConfirmation = async (data: BookingConfirmationData): Promise<boolean> => {
   try {
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_BOOKING;
+    if (!features.hasEmailJS) {
+      console.warn('EmailJS not configured, skipping booking confirmation email');
+      return false;
+    }
+
+    const serviceId = env.EMAILJS_SERVICE_ID;
+    const templateId = env.EMAILJS_TEMPLATE_BOOKING;
 
     const templateParams = {
       to_email: data.customer_email,
@@ -60,22 +82,24 @@ export const sendBookingConfirmation = async (data: BookingConfirmationData): Pr
     const response = await emailjs.send(serviceId, templateId, templateParams);
     return response.status === 200;
   } catch (error) {
-    // Error logged for debugging in development only
-    if (import.meta.env.DEV) {
-      console.error('Error sending booking confirmation:', error);
-    }
+    console.error('Error sending booking confirmation:', error);
     return false;
   }
 };
 
 /**
  * Send invoice email to customer
- * Uses the invoice template (template_invoice)
+ * Uses the invoice template
  */
 export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
   try {
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_INVOICE;
+    if (!features.hasEmailJS) {
+      console.warn('EmailJS not configured, skipping invoice email');
+      return false;
+    }
+
+    const serviceId = env.EMAILJS_SERVICE_ID;
+    const templateId = env.EMAILJS_TEMPLATE_INVOICE;
 
     const templateParams = {
       to_email: data.customer_email,
@@ -95,10 +119,7 @@ export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
     const response = await emailjs.send(serviceId, templateId, templateParams);
     return response.status === 200;
   } catch (error) {
-    // Error logged for debugging in development only
-    if (import.meta.env.DEV) {
-      console.error('Error sending invoice email:', error);
-    }
+    console.error('Error sending invoice email:', error);
     return false;
   }
 };
@@ -108,19 +129,24 @@ export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
  * REUSES the booking_confirm template but sends to owner instead
  * FREE PLAN WORKAROUND: Uses same template as booking confirmation
  */
-export const sendOwnerBookingAlert = async (data: BookingConfirmationData & { project_details: string }): Promise<boolean> => {
+export const sendNewBookingAlert = async (data: NewBookingAlertData): Promise<boolean> => {
   try {
-    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
-    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_BOOKING; // REUSE booking template
+    if (!features.hasEmailJS) {
+      console.warn('EmailJS not configured, skipping booking alert email');
+      return false;
+    }
+
+    const serviceId = env.EMAILJS_SERVICE_ID;
+    const templateId = env.EMAILJS_TEMPLATE_BOOKING; // REUSE booking template
 
     const templateParams = {
       to_email: data.your_email, // Send to YOU instead of customer
       customer_name: `🔔 NEW BOOKING: ${data.customer_name}`,
       customer_phone: data.customer_phone,
-      service_type: `${data.service_type} | Customer Email: ${data.customer_email}`,
+      service_type: `${data.service_type} | Contact: ${data.customer_email}`,
       amount: `₹${data.amount.toLocaleString('en-IN')}`,
-      deposit_amount: `₹${data.deposit_amount.toLocaleString('en-IN')} (Deposit Received)`,
-      timeline: `${data.timeline} | Project: ${data.project_details}`,
+      deposit_amount: `₹${data.deposit_amount.toLocaleString('en-IN')} (${data.payment_status})`,
+      timeline: `${data.timeline} | Details: ${data.project_details}`,
       whatsapp_link: data.whatsapp_link,
       your_email: data.customer_email, // Show customer email in template
     };
@@ -128,10 +154,27 @@ export const sendOwnerBookingAlert = async (data: BookingConfirmationData & { pr
     const response = await emailjs.send(serviceId, templateId, templateParams);
     return response.status === 200;
   } catch (error) {
-    // Error logged for debugging in development only
-    if (import.meta.env.DEV) {
-      console.error('Error sending owner alert:', error);
-    }
+    console.error('Error sending booking alert:', error);
     return false;
   }
+};
+
+/**
+ * Contact form email - DISABLED for FREE plan
+ * Data is still saved to Supabase, you can check there
+ * To enable: upgrade to EmailJS Personal plan and create contact_form template
+ */
+export const sendContactFormEmail = async (formData: {
+  name: string;
+  email: string;
+  phone?: string;
+  service: string;
+  timeline: string;
+  budget?: string;
+  message: string;
+}): Promise<boolean> => {
+  // Skip email sending for FREE plan
+  // Data is already saved in Supabase
+  console.log('Contact form email skipped (FREE plan). Check Supabase for inquiry data.');
+  return true; // Return true so form still works
 };

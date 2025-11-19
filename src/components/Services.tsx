@@ -1,9 +1,10 @@
-import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, ArrowRight, X } from 'lucide-react';
+import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useIsMobile } from '../hooks/useMobile';
 import { initEmailJS } from '../services/emailService';
 import { generateAndSendInvoice } from '../services/invoiceService';
+import { env, features } from '../utils/env';
 
 interface Service {
   icon: React.ReactNode;
@@ -19,13 +20,9 @@ interface Service {
   popular?: boolean;
 }
 
-interface ServicesProps {
-  limit?: number | null;
-  showViewAll?: boolean;
-}
-
-export default function Services({ limit = null, showViewAll = false }: ServicesProps) {
+export default function Services() {
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
+  const [showAllServices, setShowAllServices] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [customerDetails, setCustomerDetails] = useState({
@@ -34,38 +31,12 @@ export default function Services({ limit = null, showViewAll = false }: Services
     phone: '',
     projectDetails: ''
   });
-  const navigate = useNavigate();
-  const location = useLocation();
+  const isMobile = useIsMobile();
 
   // Initialize EmailJS on component mount
   useEffect(() => {
     initEmailJS();
   }, []);
-
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    if (showBookingModal) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [showBookingModal]);
-
-  // ESC key to close modal
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && showBookingModal) {
-        handleCloseModal();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [showBookingModal]);
 
   const services: Service[] = [
     {
@@ -219,20 +190,10 @@ export default function Services({ limit = null, showViewAll = false }: Services
 
   const handleBooking = async (service: Service) => {
     if (service.ctaAction === 'quote' || !service.depositAmount) {
-      // Navigate to contact form for quotes
-      if (location.pathname !== '/') {
-        navigate('/');
-        setTimeout(() => {
-          const contactSection = document.getElementById('contact');
-          if (contactSection) {
-            contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 800);
-      } else {
-        const contactSection = document.getElementById('contact');
-        if (contactSection) {
-          contactSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
+      // Scroll to contact form for quotes
+      const contactSection = document.getElementById('contact');
+      if (contactSection) {
+        contactSection.scrollIntoView({ behavior: 'smooth' });
       }
       return;
     }
@@ -240,18 +201,6 @@ export default function Services({ limit = null, showViewAll = false }: Services
     // Show booking modal to collect customer details
     setSelectedService(service);
     setShowBookingModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowBookingModal(false);
-    setSelectedService(null);
-    // Reset customer details to prevent data persistence
-    setCustomerDetails({
-      name: '',
-      email: '',
-      phone: '',
-      projectDetails: ''
-    });
   };
 
   const handlePaymentProceed = async () => {
@@ -273,20 +222,26 @@ export default function Services({ limit = null, showViewAll = false }: Services
     // Validate phone format
     const phoneRegex = /^(\+91)?[6-9]\d{9}$/;
     if (!phoneRegex.test(customerDetails.phone.replace(/\s/g, ''))) {
-      alert('Please enter a valid Indian phone number');
+      alert('Please enter a valid phone number');
       return;
     }
 
-    // Start loading (keep modal open to show loading state)
+    // Close modal and start payment
+    setShowBookingModal(false);
     setIsPaymentLoading(true);
 
     try {
+      // Check if payment feature is available
+      if (!features.hasPayment) {
+        throw new Error('Payment system is not configured. Please contact us directly.');
+      }
+
       // Call Supabase Edge Function to create Razorpay order
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment-order`, {
+      const response = await fetch(`${env.SUPABASE_URL}/functions/v1/create-payment-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`
         },
         body: JSON.stringify({
           amount: selectedService.depositAmount * 100, // Convert to paise
@@ -310,7 +265,7 @@ export default function Services({ limit = null, showViewAll = false }: Services
 
       // Load Razorpay checkout
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        key: env.RAZORPAY_KEY_ID,
         amount: amount,
         currency: 'INR',
         name: 'Sudharsan Builds',
@@ -318,8 +273,10 @@ export default function Services({ limit = null, showViewAll = false }: Services
         order_id: orderId,
         handler: async function (razorpayResponse: any) {
           // Payment successful - Generate invoice and send emails
+          console.log('Payment Response:', razorpayResponse);
+
           try {
-            // Generate invoice and send all emails (booking confirmation, invoice, owner alert)
+            // Generate invoice and send all emails
             const invoiceResult = await generateAndSendInvoice({
               name: customerDetails.name,
               email: customerDetails.email,
@@ -348,9 +305,7 @@ export default function Services({ limit = null, showViewAll = false }: Services
               alert(`✅ Payment successful!\n\nPayment ID: ${razorpayResponse.razorpay_payment_id}\n\nThank you for your deposit! I'll contact you within 24 hours.\n\nNote: Email notification may be delayed. Please check your inbox.`);
             }
           } catch (error) {
-            if (import.meta.env.DEV) {
-              console.error('Invoice generation error:', error);
-            }
+            console.error('Invoice generation error:', error);
             alert(`✅ Payment successful!\n\nPayment ID: ${razorpayResponse.razorpay_payment_id}\n\nThank you for your deposit! I'll contact you within 24 hours to discuss your project.`);
           }
         },
@@ -371,14 +326,9 @@ export default function Services({ limit = null, showViewAll = false }: Services
 
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
-
-      // Close modal after Razorpay opens successfully
-      setShowBookingModal(false);
       setIsPaymentLoading(false);
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('Payment error:', error);
-      }
+      console.error('Payment error:', error);
       alert('Unable to process payment. Please contact us directly via email.');
       setIsPaymentLoading(false);
 
@@ -415,8 +365,10 @@ export default function Services({ limit = null, showViewAll = false }: Services
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
-          {(limit ? services.slice(0, limit) : services).map((service, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          {services
+            .slice(0, isMobile && !showAllServices ? 4 : services.length)
+            .map((service, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
@@ -499,20 +451,47 @@ export default function Services({ limit = null, showViewAll = false }: Services
           ))}
         </div>
 
-        {/* View All Services Button */}
-        {showViewAll && limit && services.length > limit && (
-          <div className="text-center mb-12">
-            <Link to="/services">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-500/50 transition-all"
-              >
-                View All {services.length} Services
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
-            </Link>
-          </div>
+        {/* View All Services Button - Mobile Only */}
+        {!showAllServices && services.length > 4 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-8 md:hidden flex justify-center"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowAllServices(true)}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-cyan-500/50 transition-all"
+            >
+              View All {services.length} Services
+              <ChevronDown className="w-5 h-5" />
+            </motion.button>
+          </motion.div>
+        )}
+
+        {/* Show Less Button - Mobile Only */}
+        {showAllServices && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 md:hidden flex justify-center"
+          >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setShowAllServices(false);
+                // Scroll back to services section
+                document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-slate-600 to-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-slate-500/50 transition-all"
+            >
+              Show Less
+              <ChevronUp className="w-5 h-5" />
+            </motion.button>
+          </motion.div>
         )}
 
         {/* Trust Indicators */}
@@ -567,10 +546,7 @@ export default function Services({ limit = null, showViewAll = false }: Services
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={handleCloseModal}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="booking-modal-title"
+            onClick={() => setShowBookingModal(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
@@ -583,14 +559,13 @@ export default function Services({ limit = null, showViewAll = false }: Services
               <div className="sticky top-0 bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-6 rounded-t-2xl">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 id="booking-modal-title" className="text-2xl font-bold mb-2">Complete Your Booking</h3>
+                    <h3 className="text-2xl font-bold mb-2">Complete Your Booking</h3>
                     <p className="text-cyan-50">{selectedService.name} - {selectedService.price}</p>
                     <p className="text-sm text-cyan-100 mt-1">Deposit: ₹{selectedService.depositAmount?.toLocaleString('en-IN')}</p>
                   </div>
                   <button
-                    onClick={handleCloseModal}
+                    onClick={() => setShowBookingModal(false)}
                     className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
-                    aria-label="Close modal"
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -691,11 +666,10 @@ export default function Services({ limit = null, showViewAll = false }: Services
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-4 md:gap-3 pt-4">
+                <div className="flex gap-3 pt-4">
                   <button
-                    onClick={handleCloseModal}
-                    disabled={isPaymentLoading}
-                    className="flex-1 px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50"
+                    onClick={() => setShowBookingModal(false)}
+                    className="flex-1 px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors"
                   >
                     Cancel
                   </button>
@@ -704,15 +678,7 @@ export default function Services({ limit = null, showViewAll = false }: Services
                     disabled={isPaymentLoading}
                     className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isPaymentLoading ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                        </svg>
-                        Processing...
-                      </span>
-                    ) : 'Proceed to Payment'}
+                    {isPaymentLoading ? 'Processing...' : 'Proceed to Payment'}
                   </button>
                 </div>
               </div>

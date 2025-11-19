@@ -1,4 +1,4 @@
--- Create invoices table for automated booking invoices
+-- Create invoices table
 CREATE TABLE IF NOT EXISTS public.invoices (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   invoice_id TEXT UNIQUE NOT NULL,
@@ -29,13 +29,10 @@ CREATE INDEX IF NOT EXISTS idx_invoices_customer_email ON public.invoices(custom
 -- Create index on status for filtering
 CREATE INDEX IF NOT EXISTS idx_invoices_status ON public.invoices(status);
 
--- Create index on created_at for sorting
-CREATE INDEX IF NOT EXISTS idx_invoices_created_at ON public.invoices(created_at DESC);
-
 -- Enable Row Level Security
 ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow all operations for service role
+-- Create policy to allow all operations for authenticated users
 -- (You can modify this based on your security requirements)
 CREATE POLICY "Allow all operations for service role" ON public.invoices
   FOR ALL
@@ -62,4 +59,4 @@ CREATE TRIGGER update_invoices_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- Add comment to table
-COMMENT ON TABLE public.invoices IS 'Stores invoice details for website development bookings with EmailJS integration';
+COMMENT ON TABLE public.invoices IS 'Stores invoice details for website development bookings';

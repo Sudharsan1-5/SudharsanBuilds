@@ -1,10 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
-import { sendBookingConfirmation, sendInvoiceEmail, sendOwnerBookingAlert } from './emailService';
+import { sendBookingConfirmation, sendInvoiceEmail, sendNewBookingAlert } from './emailService';
+import { env } from '../utils/env';
 
 // Initialize Supabase client
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+const supabase = env.SUPABASE_URL && env.SUPABASE_ANON_KEY
+  ? createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY)
+  : null;
+
+if (!supabase) {
+  console.error('❌ Supabase client not initialized - missing environment variables');
+}
 
 export interface PaymentData {
   name: string;
@@ -62,12 +67,6 @@ export const calculateDueDate = (daysFromNow: number = 7): string => {
 
 /**
  * Generate and send invoice with email notifications
- * This handles the complete booking flow:
- * 1. Generate invoice
- * 2. Save to Supabase
- * 3. Send booking confirmation to customer
- * 4. Send invoice to customer
- * 5. Send alert to owner
  */
 export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<{
   success: boolean;
@@ -106,7 +105,7 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
 
     // Save to Supabase
     if (supabase) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('invoices')
         .insert([{
           invoice_id: invoiceData.invoice_id,
@@ -129,20 +128,20 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
         .select();
 
       if (error) {
-        if (import.meta.env.DEV) {
-          console.error('Supabase error saving invoice:', error);
-        }
+        console.error('Supabase error saving invoice:', error);
         throw new Error('Failed to save invoice to database');
       }
+
+      console.log('Invoice saved to Supabase:', data);
     }
 
     // Get configuration
-    const yourEmail = import.meta.env.VITE_YOUR_EMAIL || 'sudharsanofficial0001@gmail.com';
-    const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '916381556407';
-    const upiId = import.meta.env.VITE_UPI_ID || '6381556407@ptsbi';
+    const yourEmail = env.YOUR_EMAIL || 'sudharsanofficial0001@gmail.com';
+    const whatsappNumber = env.WHATSAPP_NUMBER || '919876543210';
+    const upiId = env.UPI_ID || 'sudharsan@upi';
 
     // Send booking confirmation email to customer
-    await sendBookingConfirmation({
+    const bookingConfirmationSent = await sendBookingConfirmation({
       customer_name: paymentData.name,
       customer_email: paymentData.email,
       customer_phone: paymentData.phone,
@@ -154,8 +153,10 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
       your_email: yourEmail,
     });
 
+    console.log('Booking confirmation sent:', bookingConfirmationSent);
+
     // Send invoice email to customer
-    await sendInvoiceEmail({
+    const invoiceSent = await sendInvoiceEmail({
       customer_name: paymentData.name,
       customer_email: paymentData.email,
       invoice_id: invoiceId,
@@ -170,19 +171,24 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
       upi_id: upiId,
     });
 
-    // Send new booking alert to owner (reuses booking template)
-    await sendOwnerBookingAlert({
+    console.log('Invoice email sent:', invoiceSent);
+
+    // Send new booking alert to owner
+    const alertSent = await sendNewBookingAlert({
       customer_name: paymentData.name,
-      customer_email: paymentData.email,
       customer_phone: paymentData.phone,
+      customer_email: paymentData.email,
       service_type: paymentData.service,
       amount: paymentData.amount,
       deposit_amount: paymentData.depositAmount,
-      timeline: paymentData.timeline,
       project_details: paymentData.projectDetails,
+      timeline: paymentData.timeline,
+      payment_status: 'Deposit Received',
       whatsapp_link: `https://wa.me/${paymentData.phone.replace(/\D/g, '')}`,
       your_email: yourEmail,
     });
+
+    console.log('Booking alert sent to owner:', alertSent);
 
     return {
       success: true,
@@ -190,9 +196,7 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
       message: 'Invoice generated and emails sent successfully!'
     };
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('Error in invoice generation:', error);
-    }
+    console.error('Error generating invoice:', error);
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Failed to generate invoice'
@@ -205,6 +209,7 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
  */
 export const getInvoiceById = async (invoiceId: string): Promise<Invoice | null> => {
   if (!supabase) {
+    console.error('Supabase not initialized');
     return null;
   }
 
@@ -216,17 +221,13 @@ export const getInvoiceById = async (invoiceId: string): Promise<Invoice | null>
       .single();
 
     if (error) {
-      if (import.meta.env.DEV) {
-        console.error('Error fetching invoice:', error);
-      }
+      console.error('Error fetching invoice:', error);
       return null;
     }
 
     return data as Invoice;
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('Error getting invoice:', error);
-    }
+    console.error('Error getting invoice:', error);
     return null;
   }
 };
@@ -236,6 +237,7 @@ export const getInvoiceById = async (invoiceId: string): Promise<Invoice | null>
  */
 export const getCustomerInvoices = async (customerEmail: string): Promise<Invoice[]> => {
   if (!supabase) {
+    console.error('Supabase not initialized');
     return [];
   }
 
@@ -247,17 +249,13 @@ export const getCustomerInvoices = async (customerEmail: string): Promise<Invoic
       .order('created_at', { ascending: false });
 
     if (error) {
-      if (import.meta.env.DEV) {
-        console.error('Error fetching customer invoices:', error);
-      }
+      console.error('Error fetching customer invoices:', error);
       return [];
     }
 
     return data as Invoice[];
   } catch (error) {
-    if (import.meta.env.DEV) {
-      console.error('Error getting customer invoices:', error);
-    }
+    console.error('Error getting customer invoices:', error);
     return [];
   }
 };

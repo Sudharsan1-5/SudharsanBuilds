@@ -1,6 +1,9 @@
-import { useState } from 'react';
-import { Mail, Send, Github, Linkedin, Twitter, AlertCircle, Phone } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Mail, Send, Github, Linkedin, Twitter, AlertCircle, Phone, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
+import { createClient } from '@supabase/supabase-js';
+import { initEmailJS, sendContactFormEmail } from '../services/emailService';
+import { env } from '../utils/env';
 
 interface FormErrors {
   name?: string;
@@ -10,6 +13,11 @@ interface FormErrors {
   timeline?: string;
   message?: string;
 }
+
+// Initialize Supabase client
+const supabase = env.SUPABASE_URL && env.SUPABASE_ANON_KEY
+  ? createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY)
+  : null;
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -24,6 +32,11 @@ export default function Contact() {
   });
   const [status, setStatus] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // Initialize EmailJS on component mount
+  useEffect(() => {
+    initEmailJS();
+  }, []);
 
   // Form validation
   const validateForm = (): boolean => {
@@ -76,6 +89,7 @@ export default function Contact() {
 
     // Honeypot check (bot protection)
     if (formData.honeypot) {
+      console.warn("Honeypot field filled - likely a bot");
       return;
     }
 
@@ -88,26 +102,40 @@ export default function Contact() {
     setStatus("sending");
 
     try {
-      // Send via Formspree (primary contact form delivery)
-      const formspreeId = import.meta.env.VITE_FORMSPREE_ID || 'xeopodle';
-      const res = await fetch(`https://formspree.io/f/${formspreeId}`, {
-        method: "POST",
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          service: formData.service,
-          timeline: formData.timeline,
-          budget: formData.budget,
-          message: formData.message
-        })
+      // Store in Supabase
+      if (supabase) {
+        const { error: supabaseError } = await supabase
+          .from('inquiries')
+          .insert([
+            {
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              service: formData.service,
+              timeline: formData.timeline,
+              budget: formData.budget || null,
+              message: formData.message,
+              created_at: new Date().toISOString()
+            }
+          ]);
+
+        if (supabaseError) {
+          console.error("Supabase error:", supabaseError);
+        }
+      }
+
+      // Send via EmailJS (email notification)
+      const emailSent = await sendContactFormEmail({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        service: formData.service,
+        timeline: formData.timeline,
+        budget: formData.budget,
+        message: formData.message
       });
 
-      if (res.ok) {
+      if (emailSent) {
         setStatus("success");
         setFormData({
           name: '',
@@ -126,9 +154,7 @@ export default function Contact() {
         setTimeout(() => setStatus(""), 5000);
       }
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error("Form submission error:", error);
-      }
+      console.error("Form submission error:", error);
       setStatus("error");
       setTimeout(() => setStatus(""), 5000);
     }
