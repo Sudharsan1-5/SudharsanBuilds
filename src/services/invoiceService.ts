@@ -165,6 +165,7 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
       ownerAlert: false
     };
 
+    // ✅ FIX #12: Enhanced EmailJS failure notifications with specific error tracking
     // Send booking confirmation email to customer
     try {
       emailResults.bookingConfirmation = await sendBookingConfirmation({
@@ -178,9 +179,15 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
         whatsapp_link: `https://wa.me/${whatsappNumber}`,
         your_email: yourEmail,
       });
-      console.log('Booking confirmation sent:', emailResults.bookingConfirmation);
+
+      if (emailResults.bookingConfirmation) {
+        console.log('✅ Booking confirmation email sent successfully to:', paymentData.email);
+      } else {
+        console.warn('⚠️ ALERT: Booking confirmation email failed to send to:', paymentData.email);
+      }
     } catch (error) {
-      console.error('Failed to send booking confirmation:', error);
+      console.error('❌ CRITICAL: Failed to send booking confirmation email:', error);
+      emailResults.bookingConfirmation = false;
     }
 
     // Send invoice email to customer
@@ -199,9 +206,15 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
         due_date: dueDate,
         upi_id: upiId,
       });
-      console.log('Invoice email sent:', emailResults.invoice);
+
+      if (emailResults.invoice) {
+        console.log('✅ Invoice email sent successfully to:', paymentData.email);
+      } else {
+        console.warn('⚠️ ALERT: Invoice email failed to send to:', paymentData.email);
+      }
     } catch (error) {
-      console.error('Failed to send invoice email:', error);
+      console.error('❌ CRITICAL: Failed to send invoice email:', error);
+      emailResults.invoice = false;
     }
 
     // Send new booking alert to owner
@@ -219,29 +232,41 @@ export const generateAndSendInvoice = async (paymentData: PaymentData): Promise<
         whatsapp_link: `https://wa.me/${paymentData.phone.replace(/\D/g, '')}`,
         your_email: yourEmail,
       });
-      console.log('Booking alert sent to owner:', emailResults.ownerAlert);
+
+      if (emailResults.ownerAlert) {
+        console.log('✅ Owner alert email sent successfully to:', yourEmail);
+      } else {
+        console.warn('⚠️ ALERT: Owner alert email failed to send to:', yourEmail);
+      }
     } catch (error) {
-      console.error('Failed to send owner alert:', error);
+      console.error('❌ CRITICAL: Failed to send owner alert email:', error);
+      emailResults.ownerAlert = false;
     }
 
-    // ✅ FIX: Determine overall success including database status
+    // ✅ FIX #12: Enhanced message building with specific email failure details
     const allEmailsSent = emailResults.bookingConfirmation && emailResults.invoice && emailResults.ownerAlert;
     const anyEmailSent = emailResults.bookingConfirmation || emailResults.invoice || emailResults.ownerAlert;
 
-    // Build success message with database status
+    // Build list of failed emails for detailed reporting
+    const failedEmails: string[] = [];
+    if (!emailResults.bookingConfirmation) failedEmails.push('Booking Confirmation');
+    if (!emailResults.invoice) failedEmails.push('Invoice');
+    if (!emailResults.ownerAlert) failedEmails.push('Owner Alert');
+
+    // Build success message with database status and specific email failure details
     let message = '';
     if (allEmailsSent && invoiceSavedToDatabase) {
-      message = 'Invoice generated and all emails sent successfully!';
+      message = '✅ Invoice generated and all emails sent successfully! Check your inbox.';
     } else if (anyEmailSent && invoiceSavedToDatabase) {
-      message = 'Invoice generated. Some emails may have failed - please check your inbox.';
+      message = `⚠️ Invoice generated and saved. However, ${failedEmails.length} email(s) failed to send: ${failedEmails.join(', ')}. Please contact us to resend: ${yourEmail}`;
     } else if (allEmailsSent && !invoiceSavedToDatabase) {
-      message = '⚠️ Emails sent successfully, but invoice could not be saved to database. We have a record via email.';
+      message = '⚠️ All emails sent successfully, but invoice could not be saved to database. We have a record via email. Please contact support.';
     } else if (anyEmailSent && !invoiceSavedToDatabase) {
-      message = '⚠️ Some emails sent, but invoice could not be saved to database. Please contact support.';
+      message = `⚠️ Partial success: Invoice not saved to database. Failed emails: ${failedEmails.join(', ')}. Contact support immediately: ${yourEmail}`;
     } else if (!anyEmailSent && invoiceSavedToDatabase) {
-      message = '⚠️ Invoice saved to database, but email notifications failed. Please contact support.';
+      message = `⚠️ Invoice saved to database, but ALL email notifications failed (${failedEmails.join(', ')}). Contact support: ${yourEmail}`;
     } else {
-      message = '❌ Invoice generated but both database save and email notifications failed. Please contact support immediately.';
+      message = `❌ Critical error: Both database save and all email notifications failed. Please contact support immediately at ${yourEmail} or WhatsApp: ${whatsappNumber}`;
     }
 
     return {

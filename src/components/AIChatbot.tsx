@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import CryptoJS from 'crypto-js'; // ✅ FIX #6: Encryption for chat history
 import { env } from '../utils/env';
 import { useLocation } from 'react-router-dom';
 import { PROJECTS_DATA, type Project } from '../data/projectsData';
@@ -847,10 +848,16 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(newTheme));
   };
 
-  // ✅ Save Chat History - FIX: Handle quota exceeded errors properly
+  // ✅ Save Chat History - FIX #6: Encrypt before saving with quota error handling
   const saveChatHistory = (msgs: Message[]) => {
     try {
-      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(msgs));
+      // ✅ FIX #6: Encrypt chat history using user ID as encryption key
+      const encrypted = CryptoJS.AES.encrypt(
+        JSON.stringify(msgs),
+        userId // Use persistent user ID as encryption key
+      ).toString();
+
+      localStorage.setItem(CHAT_HISTORY_KEY, encrypted);
     } catch (error) {
       // ✅ FIX: Handle QuotaExceededError specifically
       if (error instanceof Error &&
@@ -859,9 +866,13 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
         console.warn('⚠️ LocalStorage quota exceeded. Attempting cleanup...');
 
         try {
-          // Attempt 1: Save only last 20 messages
+          // Attempt 1: Save only last 20 messages (encrypted)
           const trimmedMessages = msgs.slice(-20);
-          localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(trimmedMessages));
+          const encrypted = CryptoJS.AES.encrypt(
+            JSON.stringify(trimmedMessages),
+            userId
+          ).toString();
+          localStorage.setItem(CHAT_HISTORY_KEY, encrypted);
           console.log('✅ Chat history trimmed to last 20 messages');
 
           // Notify user
@@ -884,15 +895,33 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     }
   };
 
-  // ✅ Load Chat History
+  // ✅ Load Chat History - FIX #6: Decrypt after loading
   const loadChatHistory = () => {
     try {
       const saved = localStorage.getItem(CHAT_HISTORY_KEY);
       if (saved) {
-        const history = JSON.parse(saved);
-        if (Array.isArray(history) && history.length > 0) {
-          setMessages(history);
-          setChatState(prev => ({ ...prev, isWelcome: false }));
+        // ✅ FIX #6: Decrypt chat history using user ID as decryption key
+        try {
+          const decrypted = CryptoJS.AES.decrypt(saved, userId).toString(CryptoJS.enc.Utf8);
+
+          if (!decrypted) {
+            // Decryption failed - data might be corrupted or key mismatch
+            console.warn('⚠️ Failed to decrypt chat history - clearing corrupted data');
+            localStorage.removeItem(CHAT_HISTORY_KEY);
+            return;
+          }
+
+          const history = JSON.parse(decrypted);
+          if (Array.isArray(history) && history.length > 0) {
+            setMessages(history);
+            setChatState(prev => ({ ...prev, isWelcome: false }));
+          }
+        } catch (decryptError) {
+          // Handle decryption or parsing errors
+          console.error('Failed to decrypt chat history:', decryptError);
+          console.warn('⚠️ Clearing corrupted chat history data');
+          // Clear corrupted data to allow fresh start
+          localStorage.removeItem(CHAT_HISTORY_KEY);
         }
       }
     } catch (error) {

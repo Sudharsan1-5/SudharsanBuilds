@@ -61,10 +61,21 @@ export default function Contact() {
       newErrors.email = "Please enter a valid email";
     }
 
-    // Phone validation (International format via react-phone-number-input) - TRULY OPTIONAL
-    // Only validate if phone is provided (not empty)
-    if (formData.phone && formData.phone.trim() && formData.phone.length < 8) {
-      newErrors.phone = "Please enter a valid international phone number";
+    // ✅ FIX #7: Enhanced phone validation matching server-side constraint
+    // Only validate if phone is provided (not empty) - phone is OPTIONAL
+    if (formData.phone && formData.phone.trim()) {
+      // Remove all non-digit characters except leading '+'
+      const cleanPhone = formData.phone.replace(/[^\d+]/g, '');
+
+      // Server-side regex: ^\+?[1-9]\d{7,14}$
+      // - Optional '+' at start
+      // - First digit must be 1-9 (not 0)
+      // - Total 8-15 digits (including first digit)
+      const phoneRegex = /^\+?[1-9]\d{7,14}$/;
+
+      if (!phoneRegex.test(cleanPhone)) {
+        newErrors.phone = "Please enter a valid phone number (8-15 digits, no leading zero)";
+      }
     }
 
     // Service validation
