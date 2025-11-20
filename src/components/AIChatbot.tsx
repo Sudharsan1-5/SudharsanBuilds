@@ -1,14 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, X, Minimize2, Maximize2, Sparkles, Copy, RotateCw, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
+import { Send, X, Minimize2, Maximize2, Sparkles, Copy, RotateCw, ThumbsUp, ThumbsDown, Check, Mic, MicOff, Volume2, VolumeX, Download, Search, Trash2, Moon, Sun, Zap, MessageSquare, BookOpen, DollarSign, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { env } from '../utils/env';
+import { useLocation } from 'react-router-dom';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   reaction?: 'up' | 'down' | null;
+  context?: string; // Page context when message was sent
 }
 
 interface ChatState {
@@ -22,17 +26,30 @@ interface AIChatbotProps {
   onClose: () => void;
 }
 
+// ✅ Dark Mode Context
+const THEME_STORAGE_KEY = 'ai-chat-theme';
+const CHAT_HISTORY_KEY = 'ai-chat-history';
+
 export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
+  const location = useLocation();
+
+  // ✅ Theme state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : true; // Default dark
+  });
+
   const [chatState, setChatState] = useState<ChatState>({
     isOpen: false,
     isWelcome: true,
     isFullScreen: false,
   });
 
-  // Sync external isOpen prop with internal state
   useEffect(() => {
     if (isOpen && !chatState.isOpen) {
       setChatState(prev => ({ ...prev, isOpen: true }));
+      // Load chat history on open
+      loadChatHistory();
     }
   }, [isOpen, chatState.isOpen]);
 
@@ -40,6 +57,23 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // ✅ Voice Input State
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+
+  // ✅ Read Aloud State
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentSpeakingId, setCurrentSpeakingId] = useState<string | null>(null);
+
+  // ✅ Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+
+  // ✅ Rate Limiting State (free tier)
+  const [messageCount, setMessageCount] = useState(0);
+  const MESSAGE_LIMIT = 50; // Daily limit for free tier
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -50,10 +84,185 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     scrollToBottom();
   }, [messages]);
 
+  // ✅ Initialize Web Speech API
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognitionInstance = new SpeechRecognition();
+      recognitionInstance.continuous = false;
+      recognitionInstance.interimResults = false;
+      recognitionInstance.lang = 'en-US';
+
+      recognitionInstance.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue(transcript);
+        setIsListening(false);
+      };
+
+      recognitionInstance.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognitionInstance.onend = () => {
+        setIsListening(false);
+      };
+
+      setRecognition(recognitionInstance);
+    }
+  }, []);
+
+  // ✅ Toggle Dark Mode
+  const toggleTheme = () => {
+    const newTheme = !isDarkMode;
+    setIsDarkMode(newTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(newTheme));
+  };
+
+  // ✅ Save Chat History
+  const saveChatHistory = (msgs: Message[]) => {
+    try {
+      localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(msgs));
+    } catch (error) {
+      console.error('Failed to save chat history:', error);
+    }
+  };
+
+  // ✅ Load Chat History
+  const loadChatHistory = () => {
+    try {
+      const saved = localStorage.getItem(CHAT_HISTORY_KEY);
+      if (saved) {
+        const history = JSON.parse(saved);
+        if (Array.isArray(history) && history.length > 0) {
+          setMessages(history);
+          setChatState(prev => ({ ...prev, isWelcome: false }));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+  };
+
+  // ✅ Clear Chat History
+  const clearChatHistory = () => {
+    if (confirm('Are you sure you want to clear all chat history?')) {
+      setMessages([]);
+      localStorage.removeItem(CHAT_HISTORY_KEY);
+      setChatState(prev => ({ ...prev, isWelcome: true }));
+    }
+  };
+
+  // ✅ Export Chat
+  const exportChat = (format: 'txt' | 'json') => {
+    if (messages.length === 0) {
+      alert('No messages to export');
+      return;
+    }
+
+    let content: string;
+    let filename: string;
+    let mimeType: string;
+
+    if (format === 'json') {
+      content = JSON.stringify(messages, null, 2);
+      filename = `chat-export-${new Date().toISOString()}.json`;
+      mimeType = 'application/json';
+    } else {
+      content = messages.map(msg =>
+        `[${msg.role.toUpperCase()}]${msg.context ? ` (${msg.context})` : ''}\n${msg.content}\n\n`
+      ).join('---\n\n');
+      filename = `chat-export-${new Date().toISOString()}.txt`;
+      mimeType = 'text/plain';
+    }
+
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ✅ Voice Input Toggle
+  const toggleVoiceInput = () => {
+    if (!recognition) {
+      alert('Voice input not supported in this browser. Try Chrome or Edge.');
+      return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      recognition.start();
+      setIsListening(true);
+    }
+  };
+
+  // ✅ Read Aloud
+  const readAloud = (content: string, messageId: string) => {
+    if (!('speechSynthesis' in window)) {
+      alert('Text-to-speech not supported in this browser.');
+      return;
+    }
+
+    // Stop if already speaking
+    if (isSpeaking && currentSpeakingId === messageId) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      setCurrentSpeakingId(null);
+      return;
+    }
+
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(content);
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setCurrentSpeakingId(messageId);
+    };
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setCurrentSpeakingId(null);
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setCurrentSpeakingId(null);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // ✅ Get Current Page Context
+  const getPageContext = (): string => {
+    const path = location.pathname;
+    if (path === '/' || path === '/home') return 'HomePage';
+    if (path.includes('/services')) return 'ServicesPage';
+    if (path.includes('/projects')) return 'ProjectsPage';
+    if (path.includes('/about')) return 'AboutPage';
+    if (path.includes('/contact')) return 'ContactPage';
+    if (path.includes('/faq')) return 'FAQPage';
+    return 'UnknownPage';
+  };
+
   const handleCloseChat = () => {
+    // Stop any ongoing speech
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+
     setChatState({
       isOpen: false,
-      isWelcome: true,
+      isWelcome: messages.length === 0,
       isFullScreen: false,
     });
     onClose();
@@ -66,7 +275,6 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     }));
   };
 
-  // ✅ NEW: Toggle full-screen mode
   const toggleFullScreen = () => {
     setChatState((prev) => ({
       ...prev,
@@ -74,7 +282,6 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     }));
   };
 
-  // ✅ NEW: Copy message to clipboard
   const copyMessage = async (content: string, messageId: string) => {
     try {
       await navigator.clipboard.writeText(content);
@@ -85,20 +292,16 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     }
   };
 
-  // ✅ NEW: Regenerate AI response
   const regenerateResponse = async (messageId: string) => {
     const messageIndex = messages.findIndex(m => m.id === messageId);
     if (messageIndex === -1 || messageIndex === 0) return;
 
-    // Get the user message before this AI response
     const userMessage = messages[messageIndex - 1];
     if (!userMessage || userMessage.role !== 'user') return;
 
-    // Remove the AI response and regenerate
     setMessages(prev => prev.slice(0, messageIndex));
     setIsLoading(true);
 
-    // Reuse handleSendMessage logic
     try {
       if (!env.SUPABASE_URL ||
           env.SUPABASE_URL === '' ||
@@ -112,7 +315,9 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
           role: 'assistant',
           content: '⚠️ AI chat is not configured yet. Please contact us directly via email for assistance.',
         };
-        setMessages((prev) => [...prev, errorMessage]);
+        const newMessages = [...messages.slice(0, messageIndex), errorMessage];
+        setMessages(newMessages);
+        saveChatHistory(newMessages);
         setIsLoading(false);
         return;
       }
@@ -127,6 +332,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
         },
         body: JSON.stringify({
           message: userMessage.content,
+          context: userMessage.context,
           conversationHistory: messages.slice(0, messageIndex - 1).slice(-4).map((msg) => ({
             role: msg.role,
             content: msg.content,
@@ -142,14 +348,18 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
           role: 'assistant',
           content: data.message,
         };
-        setMessages((prev) => [...prev, assistantMessage]);
+        const newMessages = [...messages.slice(0, messageIndex), assistantMessage];
+        setMessages(newMessages);
+        saveChatHistory(newMessages);
       } else {
         const errorMessage: Message = {
           id: Date.now().toString(),
           role: 'assistant',
           content: 'I encountered a temporary issue. Please try again in a moment.',
         };
-        setMessages((prev) => [...prev, errorMessage]);
+        const newMessages = [...messages.slice(0, messageIndex), errorMessage];
+        setMessages(newMessages);
+        saveChatHistory(newMessages);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -158,24 +368,33 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
         role: 'assistant',
         content: 'Connection error. Please check your internet and try again.',
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      const newMessages = [...messages.slice(0, messageIndex), errorMessage];
+      setMessages(newMessages);
+      saveChatHistory(newMessages);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ✅ NEW: Add reaction to message
   const addReaction = (messageId: string, reaction: 'up' | 'down') => {
-    setMessages(prev => prev.map(msg =>
+    const newMessages = messages.map(msg =>
       msg.id === messageId
         ? { ...msg, reaction: msg.reaction === reaction ? null : reaction }
         : msg
-    ));
+    );
+    setMessages(newMessages);
+    saveChatHistory(newMessages);
   };
 
-  // ✅ NEW: Handle suggested prompt click
+  // ✅ Quick Actions
+  const quickActions = [
+    { icon: <MessageSquare className="w-4 h-4" />, label: "What services?", action: () => handleSendMessage("What services do you offer?") },
+    { icon: <DollarSign className="w-4 h-4" />, label: "Pricing", action: () => handleSendMessage("How much does a website cost?") },
+    { icon: <BookOpen className="w-4 h-4" />, label: "Portfolio", action: () => handleSendMessage("Show me your recent projects") },
+    { icon: <Clock className="w-4 h-4" />, label: "Timeline", action: () => handleSendMessage("How long does it take to build a website?") },
+  ];
+
   const handlePromptClick = (prompt: string) => {
-    setInputValue(prompt);
     handleSendMessage(prompt);
   };
 
@@ -183,15 +402,26 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     const messageText = promptText || inputValue.trim();
     if (!messageText || isLoading) return;
 
+    // ✅ Check rate limit
+    if (messageCount >= MESSAGE_LIMIT) {
+      alert(`You've reached the daily limit of ${MESSAGE_LIMIT} messages. Please try again tomorrow or contact us for unlimited access.`);
+      return;
+    }
+
+    const context = getPageContext();
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: messageText,
+      context,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInputValue('');
     setIsLoading(true);
+    setMessageCount(prev => prev + 1);
 
     try {
       if (!env.SUPABASE_URL ||
@@ -201,13 +431,15 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
           env.SUPABASE_URL.includes('YOUR_') ||
           !env.SUPABASE_ANON_KEY ||
           env.SUPABASE_ANON_KEY === '') {
-        console.error('❌ AI chat not configured - missing or invalid environment variables');
+        console.error('❌ AI chat not configured');
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
           content: '⚠️ AI chat is not configured yet. Please contact us directly via email for assistance.',
         };
-        setMessages((prev) => [...prev, errorMessage]);
+        const finalMessages = [...newMessages, errorMessage];
+        setMessages(finalMessages);
+        saveChatHistory(finalMessages);
         setIsLoading(false);
         return;
       }
@@ -222,6 +454,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
         },
         body: JSON.stringify({
           message: messageText,
+          context, // ✅ Send page context
           conversationHistory: messages.slice(-4).map((msg) => ({
             role: msg.role,
             content: msg.content,
@@ -237,14 +470,18 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
           role: 'assistant',
           content: data.message,
         };
-        setMessages((prev) => [...prev, assistantMessage]);
+        const finalMessages = [...newMessages, assistantMessage];
+        setMessages(finalMessages);
+        saveChatHistory(finalMessages);
       } else {
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
           content: 'I encountered a temporary issue. Please try again in a moment.',
         };
-        setMessages((prev) => [...prev, errorMessage]);
+        const finalMessages = [...newMessages, errorMessage];
+        setMessages(finalMessages);
+        saveChatHistory(finalMessages);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -253,7 +490,9 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
         role: 'assistant',
         content: 'Connection error. Please check your internet and try again.',
       };
-      setMessages((prev) => [...prev, errorMessage]);
+      const finalMessages = [...newMessages, errorMessage];
+      setMessages(finalMessages);
+      saveChatHistory(finalMessages);
     } finally {
       setIsLoading(false);
     }
@@ -266,7 +505,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     }
   };
 
-  // ✅ NEW: Suggested prompts
+  // ✅ Suggested prompts
   const suggestedPrompts = [
     "What services do you offer?",
     "How much does a website cost?",
@@ -276,7 +515,28 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     "What's your turnaround time?"
   ];
 
-  // Dynamic sizing based on full-screen mode
+  // ✅ Filter messages by search
+  const filteredMessages = searchQuery.trim()
+    ? messages.filter(msg =>
+        msg.content.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : messages;
+
+  // Dynamic theming
+  const bgGradient = isDarkMode
+    ? 'linear-gradient(135deg, #0f172a 0%, #1a1f35 50%, #111827 100%)'
+    : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%)';
+
+  const headerGradient = isDarkMode
+    ? 'linear-gradient(135deg, #0891b2 0%, #0284c7 50%, #0369a1 100%)'
+    : 'linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #0284c7 100%)';
+
+  const textColor = isDarkMode ? 'text-white' : 'text-slate-900';
+  const secondaryTextColor = isDarkMode ? 'text-slate-300' : 'text-slate-700';
+  const bgColor = isDarkMode ? 'bg-slate-800' : 'bg-white';
+  const borderColor = isDarkMode ? 'border-slate-700' : 'border-slate-300';
+
+  // Dynamic sizing
   const chatContainerClass = chatState.isFullScreen
     ? "fixed inset-4 sm:inset-6 md:inset-8 z-50 w-auto"
     : "fixed bottom-4 right-4 sm:bottom-6 sm:right-6 md:bottom-8 md:right-8 z-50 w-[calc(100%-2rem)] sm:w-96 md:max-w-md";
@@ -294,19 +554,19 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: 20 }}
             transition={{ type: 'spring', duration: 0.4 }}
-            className={`${chatContainerClass} overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-700 flex flex-col`}
+            className={`${chatContainerClass} overflow-hidden rounded-2xl sm:rounded-3xl shadow-2xl border ${borderColor} flex flex-col`}
             style={{
               ...chatHeightStyle,
-              background: 'linear-gradient(135deg, #0f172a 0%, #1a1f35 50%, #111827 100%)',
-              boxShadow: '0 30px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(8, 145, 178, 0.15)',
+              background: bgGradient,
+              boxShadow: isDarkMode
+                ? '0 30px 60px rgba(0, 0, 0, 0.5), 0 0 80px rgba(8, 145, 178, 0.15)'
+                : '0 30px 60px rgba(0, 0, 0, 0.2), 0 0 40px rgba(8, 145, 178, 0.1)',
             }}
           >
             {/* Header */}
             <motion.div
               className="relative overflow-hidden p-4 md:p-6"
-              style={{
-                background: 'linear-gradient(135deg, #0891b2 0%, #0284c7 50%, #0369a1 100%)',
-              }}
+              style={{ background: headerGradient }}
             >
               <motion.div
                 animate={{ x: [-100, 100] }}
@@ -334,10 +594,39 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                     transition={{ delay: 0.1 }}
                     className="text-xs md:text-sm text-cyan-100"
                   >
-                    Premium Expertise • Instant Insights
+                    Premium Expertise • {messageCount}/{MESSAGE_LIMIT} msgs today
                   </motion.p>
                 </div>
                 <div className="flex gap-2">
+                  {/* Theme Toggle */}
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={toggleTheme}
+                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    title={isDarkMode ? "Light mode" : "Dark mode"}
+                  >
+                    {isDarkMode ? (
+                      <Sun className="w-5 h-5 text-white" />
+                    ) : (
+                      <Moon className="w-5 h-5 text-white" />
+                    )}
+                  </motion.button>
+
+                  {/* Search Toggle */}
+                  {!chatState.isWelcome && (
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setShowSearch(!showSearch)}
+                      className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      title="Search messages"
+                    >
+                      <Search className="w-5 h-5 text-white" />
+                    </motion.button>
+                  )}
+
+                  {/* Full Screen */}
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -351,6 +640,8 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                       <Maximize2 className="w-5 h-5 text-white" />
                     )}
                   </motion.button>
+
+                  {/* Close */}
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -362,6 +653,26 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                   </motion.button>
                 </div>
               </div>
+
+              {/* Search Bar */}
+              <AnimatePresence>
+                {showSearch && !chatState.isWelcome && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3"
+                  >
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search messages..."
+                      className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Welcome Screen */}
@@ -370,7 +681,12 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 text-center space-y-4 sm:space-y-6 bg-gradient-to-b from-slate-900/50 via-slate-800 to-slate-900 overflow-y-auto"
+                className={`flex-1 flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 text-center space-y-4 sm:space-y-6 overflow-y-auto`}
+                style={{
+                  background: isDarkMode
+                    ? 'linear-gradient(to bottom, rgba(15, 23, 42, 0.5), rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9))'
+                    : 'linear-gradient(to bottom, rgba(248, 250, 252, 0.5), rgba(226, 232, 240, 0.8), rgba(203, 213, 225, 0.9))'
+                }}
               >
                 <motion.div
                   initial={{ scale: 0, rotate: -180 }}
@@ -399,13 +715,13 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                   transition={{ delay: 0.3 }}
                   className="space-y-2 sm:space-y-3"
                 >
-                  <h3 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                  <h3 className={`text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent`}>
                     Premium Consultation
                   </h3>
-                  <p className="text-sm sm:text-base text-slate-200 leading-relaxed font-medium">
+                  <p className={`text-sm sm:text-base ${secondaryTextColor} leading-relaxed font-medium`}>
                     Experience elite expertise in web development, SaaS, e-commerce & digital solutions.
                   </p>
-                  <p className="text-xs sm:text-sm text-slate-400">
+                  <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                     Sudharsan's AI delivers exceptional insights tailored to your needs.
                   </p>
                 </motion.div>
@@ -419,14 +735,38 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                   Start Premium Chat
                 </motion.button>
 
-                {/* ✅ NEW: Suggested Prompts */}
+                {/* ✅ Quick Actions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="w-full max-w-md space-y-3 mt-4"
+                >
+                  <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Quick actions:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {quickActions.map((action, index) => (
+                      <motion.button
+                        key={index}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={action.action}
+                        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700 text-slate-200 border-slate-600/50' : 'bg-white/50 hover:bg-white text-slate-700 border-slate-300'} border text-xs rounded-lg transition-all text-left flex items-center gap-2`}
+                      >
+                        {action.icon}
+                        <span>{action.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Suggested Prompts */}
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
                   className="w-full max-w-md space-y-3 mt-6"
                 >
-                  <p className="text-xs text-slate-400">Quick questions:</p>
+                  <p className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Or try these questions:</p>
                   <div className="grid grid-cols-2 gap-2">
                     {suggestedPrompts.slice(0, 4).map((prompt, index) => (
                       <motion.button
@@ -434,7 +774,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handlePromptClick(prompt)}
-                        className="px-3 py-2 bg-slate-700/50 hover:bg-slate-700 text-slate-200 text-xs rounded-lg border border-slate-600/50 transition-all text-left"
+                        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700 text-slate-200 border-slate-600/50' : 'bg-white/50 hover:bg-white text-slate-700 border-slate-300'} border text-xs rounded-lg transition-all text-left`}
                       >
                         {prompt}
                       </motion.button>
@@ -446,9 +786,9 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
-                  className="text-xs text-slate-400 mt-3 sm:mt-4"
+                  className={`text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mt-3 sm:mt-4`}
                 >
-                  ✓ Instant responses • ✓ Expert insights • ✓ 24/7
+                  ✓ Instant responses • ✓ Expert insights • ✓ {MESSAGE_LIMIT} free messages/day
                 </motion.p>
               </motion.div>
             )}
@@ -457,7 +797,45 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
             {!chatState.isWelcome && (
               <>
                 <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
-                  {messages.length === 0 && (
+                  {/* Chat Controls */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => exportChat('txt')}
+                        className={`px-3 py-1.5 ${isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-slate-200 hover:bg-slate-300'} rounded-lg text-xs font-medium ${textColor} transition-colors flex items-center gap-1.5`}
+                        title="Export as TXT"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        Export
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={clearChatHistory}
+                        className={`px-3 py-1.5 ${isDarkMode ? 'bg-red-900/50 hover:bg-red-900' : 'bg-red-100 hover:bg-red-200'} rounded-lg text-xs font-medium ${isDarkMode ? 'text-red-200' : 'text-red-700'} transition-colors flex items-center gap-1.5`}
+                        title="Clear history"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Clear
+                      </motion.button>
+                    </div>
+
+                    {searchQuery && (
+                      <span className={`text-xs ${secondaryTextColor}`}>
+                        {filteredMessages.length} of {messages.length} messages
+                      </span>
+                    )}
+                  </div>
+
+                  {filteredMessages.length === 0 && messages.length > 0 && (
+                    <div className="flex items-center justify-center h-32">
+                      <p className={secondaryTextColor}>No messages match your search</p>
+                    </div>
+                  )}
+
+                  {filteredMessages.length === 0 && messages.length === 0 && (
                     <div className="flex items-center justify-center h-full">
                       <motion.div
                         animate={{ y: [0, -8, 0] }}
@@ -465,12 +843,12 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                         className="text-center space-y-3"
                       >
                         <div className="text-4xl">💬</div>
-                        <p className="text-slate-400 text-sm">Start a conversation</p>
+                        <p className={secondaryTextColor}>Start a conversation</p>
                       </motion.div>
                     </div>
                   )}
 
-                  {messages.map((message) => (
+                  {filteredMessages.map((message) => (
                     <motion.div
                       key={message.id}
                       initial={{ opacity: 0, y: 10, scale: 0.9 }}
@@ -483,9 +861,14 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                           className={`px-4 py-3 rounded-2xl ${
                             message.role === 'user'
                               ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-br-none shadow-lg'
-                              : 'bg-slate-700/80 text-slate-100 rounded-bl-none border border-slate-600/50 backdrop-blur-sm'
+                              : isDarkMode
+                              ? 'bg-slate-700/80 text-slate-100 rounded-bl-none border border-slate-600/50 backdrop-blur-sm'
+                              : 'bg-white text-slate-900 rounded-bl-none border border-slate-300 shadow-sm'
                           }`}
                         >
+                          {message.context && (
+                            <div className="text-xs opacity-60 mb-1">📍 {message.context}</div>
+                          )}
                           <div className="text-sm md:text-base leading-relaxed break-words">
                             {message.role === 'user' ? (
                               <p className="whitespace-pre-wrap">{message.content}</p>
@@ -493,37 +876,45 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                               <ReactMarkdown
                                 components={{
                                   p: ({ children }) => (
-                                    <p className="mb-2 last:mb-0 text-slate-100">{children}</p>
+                                    <p className="mb-2 last:mb-0">{children}</p>
                                   ),
                                   strong: ({ children }) => (
-                                    <strong className="font-bold text-white">{children}</strong>
+                                    <strong className="font-bold">{children}</strong>
                                   ),
                                   em: ({ children }) => (
-                                    <em className="italic text-slate-50">{children}</em>
+                                    <em className="italic">{children}</em>
                                   ),
                                   ul: ({ children }) => (
-                                    <ul className="list-disc list-inside mb-2 space-y-1 text-slate-100">
+                                    <ul className="list-disc list-inside mb-2 space-y-1">
                                       {children}
                                     </ul>
                                   ),
                                   ol: ({ children }) => (
-                                    <ol className="list-decimal list-inside mb-2 space-y-1 text-slate-100">
+                                    <ol className="list-decimal list-inside mb-2 space-y-1">
                                       {children}
                                     </ol>
                                   ),
                                   li: ({ children }) => <li className="ml-2">{children}</li>,
-                                  code: ({ children, ...props }: any) =>
-                                    props.inline ? (
-                                      <code className="bg-slate-800/50 px-2 py-0.5 rounded text-cyan-300 font-mono text-xs">
-                                        {children}
-                                      </code>
+                                  code: ({ inline, className, children, ...props }: any) => {
+                                    const match = /language-(\w+)/.exec(className || '');
+                                    return !inline && match ? (
+                                      <SyntaxHighlighter
+                                        style={isDarkMode ? vscDarkPlus : vs}
+                                        language={match[1]}
+                                        PreTag="div"
+                                        className="rounded my-2 text-xs"
+                                        {...props}
+                                      >
+                                        {String(children).replace(/\n$/, '')}
+                                      </SyntaxHighlighter>
                                     ) : (
-                                      <code className="block bg-slate-800/50 px-3 py-2 rounded my-2 text-cyan-300 font-mono text-xs overflow-x-auto">
+                                      <code className={`${isDarkMode ? 'bg-slate-800/50 text-cyan-300' : 'bg-slate-200 text-cyan-600'} px-2 py-0.5 rounded font-mono text-xs`} {...props}>
                                         {children}
                                       </code>
-                                    ),
+                                    );
+                                  },
                                   blockquote: ({ children }) => (
-                                    <blockquote className="border-l-4 border-cyan-500 pl-3 my-2 italic text-slate-300">
+                                    <blockquote className="border-l-4 border-cyan-500 pl-3 my-2 italic opacity-80">
                                       {children}
                                     </blockquote>
                                   ),
@@ -548,7 +939,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                           </div>
                         </motion.div>
 
-                        {/* ✅ NEW: Message Actions (Copy, Regenerate, Reactions) - AI messages only */}
+                        {/* Message Actions - AI messages only */}
                         {message.role === 'assistant' && (
                           <motion.div
                             initial={{ opacity: 0, y: -5 }}
@@ -560,13 +951,27 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => copyMessage(message.content, message.id)}
-                              className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors group/btn"
+                              className={`p-1.5 hover:${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded-lg transition-colors group/btn`}
                               title="Copy message"
                             >
                               {copiedId === message.id ? (
                                 <Check className="w-3.5 h-3.5 text-green-400" />
                               ) : (
-                                <Copy className="w-3.5 h-3.5 text-slate-400 group-hover/btn:text-slate-200" />
+                                <Copy className={`w-3.5 h-3.5 ${isDarkMode ? 'text-slate-400 group-hover/btn:text-slate-200' : 'text-slate-600 group-hover/btn:text-slate-900'}`} />
+                              )}
+                            </motion.button>
+
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => readAloud(message.content, message.id)}
+                              className={`p-1.5 hover:${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded-lg transition-colors group/btn ${isSpeaking && currentSpeakingId === message.id ? (isDarkMode ? 'bg-slate-700' : 'bg-slate-200') : ''}`}
+                              title={isSpeaking && currentSpeakingId === message.id ? "Stop reading" : "Read aloud"}
+                            >
+                              {isSpeaking && currentSpeakingId === message.id ? (
+                                <VolumeX className="w-3.5 h-3.5 text-cyan-400" />
+                              ) : (
+                                <Volume2 className={`w-3.5 h-3.5 ${isDarkMode ? 'text-slate-400 group-hover/btn:text-slate-200' : 'text-slate-600 group-hover/btn:text-slate-900'}`} />
                               )}
                             </motion.button>
 
@@ -574,26 +979,26 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => regenerateResponse(message.id)}
-                              className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors group/btn"
+                              className={`p-1.5 hover:${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded-lg transition-colors group/btn`}
                               title="Regenerate response"
                               disabled={isLoading}
                             >
-                              <RotateCw className="w-3.5 h-3.5 text-slate-400 group-hover/btn:text-slate-200" />
+                              <RotateCw className={`w-3.5 h-3.5 ${isDarkMode ? 'text-slate-400 group-hover/btn:text-slate-200' : 'text-slate-600 group-hover/btn:text-slate-900'}`} />
                             </motion.button>
 
-                            <div className="w-px h-4 bg-slate-600 mx-1" />
+                            <div className={`w-px h-4 ${isDarkMode ? 'bg-slate-600' : 'bg-slate-300'} mx-1`} />
 
                             <motion.button
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => addReaction(message.id, 'up')}
-                              className={`p-1.5 hover:bg-slate-700 rounded-lg transition-colors ${
-                                message.reaction === 'up' ? 'bg-slate-700' : ''
+                              className={`p-1.5 hover:${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded-lg transition-colors ${
+                                message.reaction === 'up' ? (isDarkMode ? 'bg-slate-700' : 'bg-slate-200') : ''
                               }`}
                               title="Helpful"
                             >
                               <ThumbsUp className={`w-3.5 h-3.5 ${
-                                message.reaction === 'up' ? 'text-green-400 fill-green-400' : 'text-slate-400'
+                                message.reaction === 'up' ? 'text-green-400 fill-green-400' : (isDarkMode ? 'text-slate-400' : 'text-slate-600')
                               }`} />
                             </motion.button>
 
@@ -601,13 +1006,13 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                               onClick={() => addReaction(message.id, 'down')}
-                              className={`p-1.5 hover:bg-slate-700 rounded-lg transition-colors ${
-                                message.reaction === 'down' ? 'bg-slate-700' : ''
+                              className={`p-1.5 hover:${isDarkMode ? 'bg-slate-700' : 'bg-slate-200'} rounded-lg transition-colors ${
+                                message.reaction === 'down' ? (isDarkMode ? 'bg-slate-700' : 'bg-slate-200') : ''
                               }`}
                               title="Not helpful"
                             >
                               <ThumbsDown className={`w-3.5 h-3.5 ${
-                                message.reaction === 'down' ? 'text-red-400 fill-red-400' : 'text-slate-400'
+                                message.reaction === 'down' ? 'text-red-400 fill-red-400' : (isDarkMode ? 'text-slate-400' : 'text-slate-600')
                               }`} />
                             </motion.button>
                           </motion.div>
@@ -616,14 +1021,14 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                     </motion.div>
                   ))}
 
-                  {/* ✅ ENHANCED: Typing Indicator */}
+                  {/* Typing Indicator */}
                   {isLoading && (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="flex justify-start"
                     >
-                      <div className="bg-slate-700/80 text-slate-100 px-5 py-4 rounded-2xl rounded-bl-none border border-slate-600/50 backdrop-blur-sm flex items-center gap-3">
+                      <div className={`${isDarkMode ? 'bg-slate-700/80 border-slate-600/50' : 'bg-white border-slate-300'} border px-5 py-4 rounded-2xl rounded-bl-none backdrop-blur-sm flex items-center gap-3`}>
                         <div className="flex gap-2">
                           <motion.div
                             animate={{ y: [0, -8, 0] }}
@@ -641,7 +1046,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                             className="w-2.5 h-2.5 bg-cyan-400 rounded-full"
                           />
                         </div>
-                        <span className="text-xs text-slate-300 font-medium">AI is thinking...</span>
+                        <span className={`text-xs ${isDarkMode ? 'text-slate-300' : 'text-slate-600'} font-medium`}>AI is thinking...</span>
                       </div>
                     </motion.div>
                   )}
@@ -651,10 +1056,12 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
 
                 {/* Input Area */}
                 <div
-                  className="border-t p-3 sm:p-4 md:p-6 backdrop-blur-lg"
+                  className={`border-t p-3 sm:p-4 md:p-6 backdrop-blur-lg`}
                   style={{
-                    background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-                    borderTopColor: 'rgba(8, 145, 178, 0.2)',
+                    background: isDarkMode
+                      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                      : 'linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                    borderTopColor: isDarkMode ? 'rgba(8, 145, 178, 0.2)' : 'rgba(8, 145, 178, 0.3)',
                   }}
                 >
                   <div className="flex gap-2 sm:gap-3 mb-2">
@@ -663,15 +1070,38 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything..."
-                      disabled={isLoading}
-                      className="flex-1 bg-slate-700/60 text-white px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl border border-slate-600/50 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all text-sm placeholder-slate-500 disabled:opacity-50 backdrop-blur-sm"
+                      placeholder={messageCount >= MESSAGE_LIMIT ? "Daily limit reached" : "Ask me anything..."}
+                      disabled={isLoading || messageCount >= MESSAGE_LIMIT}
+                      className={`flex-1 ${isDarkMode ? 'bg-slate-700/60 border-slate-600/50 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'} px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl border focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all text-sm disabled:opacity-50 backdrop-blur-sm`}
                     />
+
+                    {/* Voice Input */}
+                    {recognition && (
+                      <motion.button
+                        whileHover={{ scale: 1.08 }}
+                        whileTap={{ scale: 0.92 }}
+                        onClick={toggleVoiceInput}
+                        disabled={isLoading}
+                        className={`w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 ${
+                          isListening
+                            ? 'bg-red-500 hover:bg-red-600'
+                            : 'bg-gradient-to-r from-cyan-500 to-blue-600'
+                        } text-white rounded-lg sm:rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0`}
+                        title={isListening ? "Stop listening" : "Voice input"}
+                      >
+                        {isListening ? (
+                          <MicOff className="w-5 h-5" />
+                        ) : (
+                          <Mic className="w-5 h-5" />
+                        )}
+                      </motion.button>
+                    )}
+
                     <motion.button
                       whileHover={{ scale: 1.08 }}
                       whileTap={{ scale: 0.92 }}
                       onClick={() => handleSendMessage()}
-                      disabled={isLoading || !inputValue.trim()}
+                      disabled={isLoading || !inputValue.trim() || messageCount >= MESSAGE_LIMIT}
                       className="w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg sm:rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0"
                     >
                       <Send className="w-5 h-5" />
@@ -680,9 +1110,13 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-xs text-slate-500 px-1"
+                    className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-600'} px-1`}
                   >
-                    ↵ Enter to send • Powered by Gemini AI
+                    {messageCount >= MESSAGE_LIMIT ? (
+                      <span className="text-red-400">Daily limit reached. Contact us for unlimited access.</span>
+                    ) : (
+                      <>↵ Enter to send{recognition && ' • 🎤 Voice input available'} • Powered by Gemini AI</>
+                    )}
                   </motion.p>
                 </div>
               </>
