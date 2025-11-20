@@ -179,11 +179,40 @@ Remember: Business questions about services, pricing, and projects are ALWAYS we
         }
       );
 
+      // ✅ FIX #10: Enhanced error handling for streaming
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Gemini Streaming API Error:", errorText);
+        console.error("Gemini Streaming API Error - Status:", response.status);
+        console.error("Gemini Streaming API Error - Response:", errorText);
+
+        // Categorize streaming errors
+        const errorLower = errorText.toLowerCase();
+
+        if (response.status === 429 || errorLower.includes('quota') || errorLower.includes('rate limit')) {
+          return new Response(
+            JSON.stringify({
+              error: 'QUOTA_EXCEEDED',
+              userMessage: "I'm experiencing high demand right now. Please wait a moment and try again!"
+            }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          return new Response(
+            JSON.stringify({
+              error: 'AUTH_ERROR',
+              userMessage: "I'm having trouble connecting. Please contact support at sudharsanofficial0001@gmail.com"
+            }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
         return new Response(
-          JSON.stringify({ error: "Failed to initialize streaming" }),
+          JSON.stringify({
+            error: 'STREAMING_ERROR',
+            userMessage: "Failed to initialize streaming. Please try again."
+          }),
           { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -219,6 +248,7 @@ Remember: Business questions about services, pricing, and projects are ALWAYS we
         }
       );
 
+      // ✅ FIX #10: Enhanced error categorization for better user experience
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Gemini API Error - Status:", response.status);
@@ -231,11 +261,78 @@ Remember: Business questions about services, pricing, and projects are ALWAYS we
           errorData = { message: errorText };
         }
 
+        // Categorize errors based on status code and message content
+        const errorMessage = errorData?.error?.message || errorData?.message || errorText.toLowerCase();
+
+        // QUOTA_EXCEEDED: Rate limit or quota errors
+        if (response.status === 429 || errorMessage.includes('quota') || errorMessage.includes('rate limit')) {
+          return new Response(
+            JSON.stringify({
+              error: 'QUOTA_EXCEEDED',
+              message: '⚠️ AI service is temporarily at capacity. Please try again in a moment.',
+              userMessage: "I'm experiencing high demand right now. Please wait a moment and try again!"
+            }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // AUTH_ERROR: API key or authentication issues
+        if (response.status === 401 || response.status === 403 || errorMessage.includes('auth') || errorMessage.includes('api key')) {
+          console.error('❌ CRITICAL: Gemini API authentication failed - check API key configuration');
+          return new Response(
+            JSON.stringify({
+              error: 'AUTH_ERROR',
+              message: '❌ AI service authentication failed. Please contact support.',
+              userMessage: "I'm having trouble connecting to my AI service. Please contact support at sudharsanofficial0001@gmail.com"
+            }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // NETWORK_ERROR: Timeout or network issues
+        if (response.status === 408 || response.status === 504 || errorMessage.includes('timeout') || errorMessage.includes('network')) {
+          return new Response(
+            JSON.stringify({
+              error: 'NETWORK_ERROR',
+              message: '⚠️ Network timeout. Please check your connection and try again.',
+              userMessage: "The request timed out. Please check your internet connection and try again."
+            }),
+            { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // INVALID_REQUEST: Bad request errors
+        if (response.status === 400 || errorMessage.includes('invalid') || errorMessage.includes('bad request')) {
+          return new Response(
+            JSON.stringify({
+              error: 'INVALID_REQUEST',
+              message: '❌ Invalid request format. Please try rephrasing your question.',
+              userMessage: "I couldn't understand that request. Please try asking in a different way."
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // SERVER_ERROR: Internal server errors from Gemini
+        if (response.status >= 500) {
+          return new Response(
+            JSON.stringify({
+              error: 'SERVER_ERROR',
+              message: '❌ AI service is temporarily unavailable. Please try again later.',
+              userMessage: "The AI service is experiencing issues. Please try again in a few minutes."
+            }),
+            { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // UNKNOWN_ERROR: Fallback for unhandled errors
         return new Response(
           JSON.stringify({
-            error: "Failed to get response from AI service",
+            error: 'UNKNOWN_ERROR',
+            message: "Failed to get response from AI service",
             details: errorData,
-            status: response.status
+            status: response.status,
+            userMessage: "Something went wrong. Please try again or contact support."
           }),
           { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -306,11 +403,44 @@ Remember: Business questions about services, pricing, and projects are ALWAYS we
       );
     }
   } catch (error) {
+    // ✅ FIX #10: Enhanced catch block with error categorization
     console.error("Unexpected error in chatbot function:", error);
     console.error("Error stack:", error instanceof Error ? error.stack : "No stack trace");
+
+    const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
+
+    // Network/fetch errors
+    if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('timeout')) {
+      return new Response(
+        JSON.stringify({
+          error: 'NETWORK_ERROR',
+          message: 'Network connection issue',
+          userMessage: "I'm having trouble connecting. Please check your internet and try again.",
+          success: false
+        }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // JSON parsing errors
+    if (errorMessage.includes('json') || errorMessage.includes('parse')) {
+      return new Response(
+        JSON.stringify({
+          error: 'PARSE_ERROR',
+          message: 'Failed to parse API response',
+          userMessage: "I received an unexpected response. Please try again.",
+          success: false
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Generic unexpected error
     return new Response(
       JSON.stringify({
-        error: "I'm experiencing technical difficulties. Please try again in a moment.",
+        error: 'UNEXPECTED_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        userMessage: "I'm experiencing technical difficulties. Please try again in a moment.",
         success: false
       }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

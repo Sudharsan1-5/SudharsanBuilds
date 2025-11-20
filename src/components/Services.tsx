@@ -40,6 +40,16 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
   const modalRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
+  // ✅ FIX #8: CSRF token generation for payment security
+  useEffect(() => {
+    // Generate CSRF token on component mount if not already present
+    if (!sessionStorage.getItem('csrf_token')) {
+      const csrfToken = crypto.randomUUID();
+      sessionStorage.setItem('csrf_token', csrfToken);
+      console.log('✅ CSRF token generated for payment security');
+    }
+  }, []);
+
   // Initialize EmailJS on component mount
   useEffect(() => {
     initEmailJS();
@@ -324,11 +334,22 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       return;
     }
 
-    // Validate phone format (international - handled by PhoneInput library) - OPTIONAL
-    // Only validate if phone is provided
-    if (customerDetails.phone && customerDetails.phone.trim() && customerDetails.phone.length < 8) {
-      alert('Please enter a valid international phone number');
-      return;
+    // ✅ FIX #7: Enhanced phone validation matching server-side constraint - OPTIONAL
+    // Only validate if phone is provided (phone field is optional)
+    if (customerDetails.phone && customerDetails.phone.trim()) {
+      // Remove all non-digit characters except leading '+'
+      const cleanPhone = customerDetails.phone.replace(/[^\d+]/g, '');
+
+      // Server-side regex: ^\+?[1-9]\d{7,14}$
+      // - Optional '+' at start
+      // - First digit must be 1-9 (not 0)
+      // - Total 8-15 digits (including first digit)
+      const phoneRegex = /^\+?[1-9]\d{7,14}$/;
+
+      if (!phoneRegex.test(cleanPhone)) {
+        alert('Please enter a valid phone number (8-15 digits, no leading zero)');
+        return;
+      }
     }
 
     // ✅ FIX: Validate Razorpay script is loaded
@@ -370,12 +391,16 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       // Now it's safe to construct the URL
       const createOrderUrl = `${env.SUPABASE_URL}/functions/v1/create-payment-order`;
 
+      // ✅ FIX #8: Get CSRF token from sessionStorage for security
+      const csrfToken = sessionStorage.getItem('csrf_token');
+
       // Call Supabase Edge Function to create Razorpay order
       const response = await fetch(createOrderUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`
+          'Authorization': `Bearer ${env.SUPABASE_ANON_KEY}`,
+          'X-CSRF-Token': csrfToken || '' // ✅ FIX #8: Include CSRF token for request validation
         },
         body: JSON.stringify({
           amount: selectedService.depositAmount * 100, // Convert to paise
