@@ -1,13 +1,31 @@
 import emailjs from '@emailjs/browser';
 import { env, features } from '../utils/env';
 
-// Initialize EmailJS with public key
-export const initEmailJS = () => {
-  if (features.hasEmailJS && env.EMAILJS_PUBLIC_KEY) {
-    emailjs.init(env.EMAILJS_PUBLIC_KEY);
-    console.log('✅ EmailJS initialized successfully');
-  } else {
+// Track if EmailJS has been initialized
+let isEmailJSInitialized = false;
+
+/**
+ * Lazy initialization - only initialize when actually sending an email
+ * This prevents loading EmailJS on page load if user never interacts with forms
+ */
+const ensureEmailJSInitialized = async (): Promise<boolean> => {
+  if (isEmailJSInitialized) {
+    return true; // Already initialized
+  }
+
+  if (!features.hasEmailJS || !env.EMAILJS_PUBLIC_KEY) {
     console.warn('⚠️ EmailJS not configured - email notifications will be skipped');
+    return false;
+  }
+
+  try {
+    emailjs.init(env.EMAILJS_PUBLIC_KEY);
+    isEmailJSInitialized = true;
+    console.log('✅ EmailJS initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('Error initializing EmailJS:', error);
+    return false;
   }
 };
 
@@ -56,10 +74,13 @@ interface NewBookingAlertData {
 /**
  * Send booking confirmation email to customer
  * Uses the booking_confirm template
+ * LAZY LOADED - EmailJS only initializes when this function is called
  */
 export const sendBookingConfirmation = async (data: BookingConfirmationData): Promise<boolean> => {
   try {
-    if (!features.hasEmailJS) {
+    // Initialize EmailJS only when actually sending email
+    const initialized = await ensureEmailJSInitialized();
+    if (!initialized) {
       console.warn('EmailJS not configured, skipping booking confirmation email');
       return false;
     }
@@ -90,10 +111,13 @@ export const sendBookingConfirmation = async (data: BookingConfirmationData): Pr
 /**
  * Send invoice email to customer
  * Uses the invoice template
+ * LAZY LOADED - EmailJS only initializes when this function is called
  */
 export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
   try {
-    if (!features.hasEmailJS) {
+    // Initialize EmailJS only when actually sending email
+    const initialized = await ensureEmailJSInitialized();
+    if (!initialized) {
       console.warn('EmailJS not configured, skipping invoice email');
       return false;
     }
@@ -128,10 +152,13 @@ export const sendInvoiceEmail = async (data: InvoiceData): Promise<boolean> => {
  * Send new booking alert to owner
  * REUSES the booking_confirm template but sends to owner instead
  * FREE PLAN WORKAROUND: Uses same template as booking confirmation
+ * LAZY LOADED - EmailJS only initializes when this function is called
  */
 export const sendNewBookingAlert = async (data: NewBookingAlertData): Promise<boolean> => {
   try {
-    if (!features.hasEmailJS) {
+    // Initialize EmailJS only when actually sending email
+    const initialized = await ensureEmailJSInitialized();
+    if (!initialized) {
       console.warn('EmailJS not configured, skipping booking alert email');
       return false;
     }

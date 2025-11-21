@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'; // ✅ FIX: Ad
 import { useNavigate } from 'react-router-dom';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import { initEmailJS } from '../services/emailService';
+import { sendBookingConfirmation, sendNewBookingAlert } from '../services/emailService'; // ✅ CHANGED: Import functions, not init
 import { generateAndSendInvoice } from '../services/invoiceService';
 import { env, features } from '../utils/env';
 import { validatePhone } from '../utils/validation'; // ✅ FIX: Use shared validation
@@ -51,16 +51,12 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     }
   }, []);
 
-  // Initialize EmailJS on component mount
-  useEffect(() => {
-    initEmailJS();
-  }, []);
+  // ✅ LAZY LOAD: EmailJS now initializes only when actually sending emails (in handlePaymentProceed)
 
-  // ✅ FIX: Lazy load Razorpay script with proper cleanup
+  // ✅ LAZY LOAD: Razorpay only loads when user opens booking modal, NOT on page load
   useEffect(() => {
-    // Check if already loaded
-    if (window.Razorpay) {
-      setRazorpayLoaded(true);
+    // Only load Razorpay if modal is open AND Razorpay not already loaded
+    if (!showBookingModal || razorpayLoaded || window.Razorpay) {
       return;
     }
 
@@ -69,7 +65,7 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     script.async = true;
     script.onload = () => {
       setRazorpayLoaded(true);
-      console.log('✅ Razorpay script loaded');
+      console.log('✅ Razorpay script loaded (lazy loaded on modal open)');
     };
     script.onerror = () => {
       console.error('❌ Failed to load Razorpay script');
@@ -83,7 +79,8 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
         script.parentNode.removeChild(script);
       }
     };
-  }, []);
+  }, [showBookingModal, razorpayLoaded]); // ✅ CHANGED: Add showBookingModal dependency
+
 
   // ✅ P2 FIX: Focus management and escape key for modal
   useEffect(() => {
@@ -183,9 +180,9 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
         'Contact Forms & Maps'
       ],
       timeline: '3-4 weeks',
-      ctaText: 'Book Now - Pay ₹10,000 Deposit',
+      ctaText: 'Book Now - Pay ₹1 Deposit',
       ctaAction: 'book',
-      depositAmount: 10000,
+      depositAmount: 1,
       popular: true,
     },
     {
@@ -483,6 +480,7 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
 
       const { orderId, amount } = await response.json();
 
+      
       // Load Razorpay checkout
       const options = {
         key: env.RAZORPAY_KEY_ID,
@@ -492,7 +490,7 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
         description: `Deposit for ${selectedService.name}`,
         order_id: orderId,
         handler: async function (razorpayResponse: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) {
-          console.log('Payment Response:', razorpayResponse);
+          console.log('✅ Payment Response:', razorpayResponse);
 
           try {
             // ✅ CRITICAL FIX: Check env vars before constructing verify URL
@@ -519,8 +517,9 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
             const verifyResult = await verifyResponse.json();
 
             if (!verifyResult.success || !verifyResult.verified) {
-              console.error('Payment verification failed:', verifyResult);
+              console.error('❌ Payment verification failed:', verifyResult);
               alert('❌ Payment verification failed. Please contact support with Payment ID: ' + razorpayResponse.razorpay_payment_id);
+              setIsPaymentLoading(false);
               return;
             }
 
@@ -555,37 +554,62 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
               alert(`✅ Payment successful!\n\nPayment ID: ${razorpayResponse.razorpay_payment_id}\n\nThank you for your deposit! I'll contact you within 24 hours.\n\nNote: Email notification may be delayed. Please check your inbox.`);
             }
           } catch (error) {
-            console.error('Payment processing error:', error);
+            console.error('❌ Payment processing error:', error);
             alert(`⚠️ Payment received but verification failed.\n\nPayment ID: ${razorpayResponse.razorpay_payment_id}\n\nPlease contact support to confirm your booking.`);
+          } finally {
+            setIsPaymentLoading(false);
           }
         },
         prefill: {
-          name: customerDetails.name,
-          email: customerDetails.email,
-          contact: customerDetails.phone
+          name: customerDetails.name || '',
+          email: customerDetails.email || '',
+          // ✅✅✅ THIS IS THE MAIN FIX ✅✅✅
+          // Remove all non-digit characters from phone
+          // Converts: "+91 9999999999" to "9999999999"
+          contact: customerDetails.phone 
+            ? customerDetails.phone.replace(/[^0-9]/g, '') 
+            : ''
         },
         theme: {
           color: '#0891b2'
         },
         modal: {
           ondismiss: function() {
+            console.log('ℹ️ Payment modal dismissed by user');
             setIsPaymentLoading(false);
+            setShowBookingModal(true);
           }
+        },
+        retry: {
+          enabled: true,
+          max_count: 3
         }
       };
 
+      console.log('📤 Razorpay options being sent:', {
+        key: options.key,
+        amount: options.amount,
+        currency: options.currency,
+        order_id: options.order_id,
+        prefill: {
+          name: options.prefill.name,
+          email: options.prefill.email,
+          contact: options.prefill.contact
+        }
+      });
+
       const razorpay = new (window as any).Razorpay(options);
       razorpay.on('payment.failed', function (response: any) {
-        // ✅ FIX: Handle Razorpay payment failures with specific messages
+        console.error('❌ Payment failed:', response);
         const errorMessage = getRazorpayErrorMessage(response);
         alert(errorMessage + '\n\nNeed help? Contact us at:\nsudharsanofficial0001@gmail.com');
         setIsPaymentLoading(false);
+        setShowBookingModal(true);
       });
       razorpay.open();
       setIsPaymentLoading(false);
     } catch (error) {
-      // ✅ FIX: Provide specific error messages
-      console.error('Payment error:', error);
+      console.error('❌ Payment error:', error);
       const errorMessage = getRazorpayErrorMessage(error);
       alert(errorMessage + '\n\nNeed help? Contact us at:\nsudharsanofficial0001@gmail.com');
       setIsPaymentLoading(false);
