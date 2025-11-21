@@ -1185,15 +1185,29 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
   };
 
   // ✅ Quick Actions
+  // ✅ CRITICAL FIX: Quick actions now properly transition from welcome screen
   const quickActions = [
-    { icon: <MessageSquare className="w-4 h-4" />, label: "What services?", action: () => handleSendMessage("What services do you offer?") },
-    { icon: <DollarSign className="w-4 h-4" />, label: "Pricing", action: () => handleSendMessage("How much does a website cost?") },
-    { icon: <BookOpen className="w-4 h-4" />, label: "Portfolio", action: () => handleSendMessage("Show me your recent projects") },
-    { icon: <Clock className="w-4 h-4" />, label: "Timeline", action: () => handleSendMessage("How long does it take to build a website?") },
+    { icon: <MessageSquare className="w-4 h-4" />, label: "What services?", action: () => handleQuickAction("What services do you offer?") },
+    { icon: <DollarSign className="w-4 h-4" />, label: "Pricing", action: () => handleQuickAction("How much does a website cost?") },
+    { icon: <BookOpen className="w-4 h-4" />, label: "Portfolio", action: () => handleQuickAction("Show me your recent projects") },
+    { icon: <Clock className="w-4 h-4" />, label: "Timeline", action: () => handleQuickAction("How long does it take to build a website?") },
   ];
 
+  // ✅ CRITICAL FIX: Handle quick actions and prompts from welcome screen
+  const handleQuickAction = (message: string) => {
+    // First dismiss welcome screen for immediate UI feedback
+    if (chatState.isWelcome) {
+      setChatState((prev) => ({
+        ...prev,
+        isWelcome: false,
+      }));
+    }
+    // Then send the message
+    handleSendMessage(message);
+  };
+
   const handlePromptClick = (prompt: string) => {
-    handleSendMessage(prompt);
+    handleQuickAction(prompt);
   };
 
   const handleSendMessage = async (promptText?: string) => {
@@ -1604,10 +1618,11 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                     {quickActions.map((action, index) => (
                       <motion.button
                         key={index}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: isLoading ? 1 : 1.05 }}
+                        whileTap={{ scale: isLoading ? 1 : 0.95 }}
                         onClick={action.action}
-                        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700 text-slate-200 border-slate-600/50' : 'bg-white/50 hover:bg-white text-slate-700 border-slate-300'} border text-xs rounded-lg transition-all text-left flex items-center gap-2`}
+                        disabled={isLoading}
+                        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700 text-slate-200 border-slate-600/50' : 'bg-white/50 hover:bg-white text-slate-700 border-slate-300'} border text-xs rounded-lg transition-all text-left flex items-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         {action.icon}
                         <span>{action.label}</span>
@@ -1628,10 +1643,11 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                     {suggestedPrompts.slice(0, 4).map((prompt, index) => (
                       <motion.button
                         key={index}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: isLoading ? 1 : 1.05 }}
+                        whileTap={{ scale: isLoading ? 1 : 0.95 }}
                         onClick={() => handlePromptClick(prompt)}
-                        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700 text-slate-200 border-slate-600/50' : 'bg-white/50 hover:bg-white text-slate-700 border-slate-300'} border text-xs rounded-lg transition-all text-left`}
+                        disabled={isLoading}
+                        className={`px-3 py-2 ${isDarkMode ? 'bg-slate-700/50 hover:bg-slate-700 text-slate-200 border-slate-600/50' : 'bg-white/50 hover:bg-white text-slate-700 border-slate-300'} border text-xs rounded-lg transition-all text-left ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         {prompt}
                       </motion.button>
