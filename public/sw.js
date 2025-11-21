@@ -6,10 +6,11 @@ const CACHE_VERSION = '2025-01-20-v1';
 const CACHE_NAME = `sudharsanbuilds-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `sudharsanbuilds-runtime-${CACHE_VERSION}`;
 
-// Assets to cache on install - minimal list
+// ✅ PRODUCTION: Assets to cache on install
 const PRECACHE_URLS = [
   '/',
   '/index.html',
+  '/offline.html', // ✅ PRODUCTION: Offline fallback page
 ];
 
 // ✅ P1 FIX: Install event - Force immediate activation
@@ -80,9 +81,13 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // Fallback to cache on network failure (offline)
+          // ✅ PRODUCTION: Better offline fallback
           return caches.match(event.request)
-            .then((cachedResponse) => cachedResponse || caches.match('/index.html'));
+            .then((cachedResponse) => {
+              if (cachedResponse) return cachedResponse;
+              // Show offline page for HTML requests
+              return caches.match('/offline.html');
+            });
         })
     );
     return;
