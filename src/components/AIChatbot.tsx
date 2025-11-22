@@ -6,7 +6,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import CryptoJS from 'crypto-js'; // ✅ FIX #6: Encryption for chat history
 import { env } from '../utils/env';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { PROJECTS_DATA, type Project } from '../data/projectsData';
 
 // Service data structure
@@ -231,57 +231,67 @@ const getPageSummary = (pathname: string): string => {
   }
 };
 
-// ✅ Phase 1: Smart follow-up suggestions based on message context
+// ✅ P1 FIX: Action-oriented follow-up suggestions for conversion
 const getFollowUpSuggestions = (userMessage: string, assistantMessage: string, context: string): string[] => {
   const lowerUserMsg = userMessage.toLowerCase();
   const lowerAssistantMsg = assistantMessage.toLowerCase();
 
-  // Service-related follow-ups
+  // Service/Pricing follow-ups - push towards booking
   if (lowerUserMsg.match(/service|pricing|cost|price/i)) {
     return [
-      "What's included in the pricing?",
-      "Do you offer payment plans?",
-      "How long does it take?",
-      "Can I see examples of your work?"
+      "📅 Book a free consultation",
+      "💰 I want a custom quote",
+      "✨ Show me similar projects",
+      "⚡ Start my project now"
     ];
   }
 
-  // Project-related follow-ups
+  // Project/Portfolio follow-ups - push towards contact
   if (lowerUserMsg.match(/project|portfolio|work|example/i)) {
     return [
-      "What services do you offer?",
-      "How much does a similar project cost?",
-      "What technologies do you use?",
-      "Can you customize this for me?"
+      "💬 Discuss my project idea",
+      "💰 How much for similar work?",
+      "📅 Book a consultation call",
+      "⚡ Get started today"
     ];
   }
 
-  // Timeline-related follow-ups
+  // Timeline follow-ups - create urgency
   if (lowerUserMsg.match(/how long|timeline|duration|time/i)) {
     return [
-      "What's the process like?",
-      "Can we start immediately?",
-      "What information do you need?",
-      "What about maintenance?"
+      "⚡ Can we start this week?",
+      "📅 Book my project slot",
+      "💰 View pricing options",
+      "💬 Contact for priority delivery"
     ];
   }
 
-  // Process-related follow-ups
+  // Process follow-ups - move to action
   if (lowerUserMsg.match(/process|workflow|how.*work/i)) {
     return [
-      "What do I need to prepare?",
-      "How do we communicate?",
-      "What's the payment structure?",
-      "Can I request changes?"
+      "🚀 I'm ready to start",
+      "📅 Schedule a call",
+      "💰 Get detailed quote",
+      "💬 Open contact form"
     ];
   }
 
-  // Default follow-ups
+  // Booking/consultation follow-ups - close the deal
+  if (lowerUserMsg.match(/book|consultation|call|meet/i)) {
+    return [
+      "💬 Go to contact form now",
+      "💰 See full pricing details",
+      "📧 Send email directly",
+      "⚡ What info do you need?"
+    ];
+  }
+
+  // Default follow-ups - always actionable
   return [
-    "Tell me about your services",
-    "Show me your projects",
-    "What are your rates?",
-    "How can we get started?"
+    "📅 Book free consultation",
+    "💰 View pricing packages",
+    "✨ See portfolio projects",
+    "⚡ Get started today"
   ];
 };
 
@@ -682,6 +692,7 @@ const getUserId = (): string => {
 
 export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
   const location = useLocation();
+  const navigate = useNavigate(); // ✅ ENHANCEMENT: Add page navigation
 
   // ✅ Phase 2: Persistent User ID
   const [userId] = useState<string>(getUserId());
@@ -692,7 +703,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     return saved ? JSON.parse(saved) : true; // Default dark
   });
 
-  // ✅ Phase 2: Function Call Execution
+  // ✅ ENHANCEMENT: Function Call Execution with cross-page navigation support
   const executeFunctionCall = (functionName: string, args: any) => {
     console.log(`🔧 Executing function: ${functionName}`, args);
 
@@ -700,45 +711,155 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
       case 'scrollToSection':
         const sectionId = args.section;
         const element = document.getElementById(sectionId);
+
         if (element) {
+          // ✅ Element found on current page
+          const feedbackMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: `✅ Taking you to the ${sectionId} section now...`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, feedbackMessage]);
+
           element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          // Close chat to show the section
+
           setTimeout(() => {
             handleCloseChat();
-          }, 500);
+          }, 1500);
+        } else {
+          // ✅ ENHANCEMENT: Navigate to homepage first, then scroll
+          console.log(`Section not on current page. Navigating to homepage...`);
+
+          const navMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: `✅ Taking you to the ${sectionId} section on the homepage...`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, navMessage]);
+
+          // Navigate to homepage
+          navigate('/');
+
+          // Wait for page load, then scroll
+          setTimeout(() => {
+            const targetElement = document.getElementById(sectionId);
+            if (targetElement) {
+              targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            handleCloseChat();
+          }, 800);
         }
         break;
 
       case 'openContactForm':
-        // Scroll to contact section
         const contactSection = document.getElementById('contact');
+
         if (contactSection) {
+          // ✅ Contact form found on current page
+          const feedbackMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: `✅ Opening the contact form for you...`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, feedbackMessage]);
+
           contactSection.scrollIntoView({ behavior: 'smooth' });
+
           // Prefill message if provided
           if (args.prefillMessage) {
             setTimeout(() => {
               const messageInput = document.querySelector('textarea[name="message"]') as HTMLTextAreaElement;
               if (messageInput) {
                 messageInput.value = args.prefillMessage;
+                messageInput.focus();
               }
-            }, 800);
+            }, 1200);
           }
-          // Close chat after navigating
+
           setTimeout(() => {
             handleCloseChat();
-          }, 1000);
+          }, 1800);
+        } else {
+          // ✅ ENHANCEMENT: Navigate to homepage contact section
+          console.log('Contact form not on current page. Navigating to homepage...');
+
+          const navMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: `✅ Taking you to the contact form on the homepage...`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, navMessage]);
+
+          // Navigate to homepage
+          navigate('/');
+
+          // Wait for page load, then scroll to contact
+          setTimeout(() => {
+            const targetSection = document.getElementById('contact');
+            if (targetSection) {
+              targetSection.scrollIntoView({ behavior: 'smooth' });
+
+              // Prefill message if provided
+              if (args.prefillMessage) {
+                setTimeout(() => {
+                  const messageInput = document.querySelector('textarea[name="message"]') as HTMLTextAreaElement;
+                  if (messageInput) {
+                    messageInput.value = args.prefillMessage;
+                    messageInput.focus();
+                  }
+                }, 1200);
+              }
+            }
+            handleCloseChat();
+          }, 800);
         }
         break;
 
       case 'showServiceDetails':
-        // Scroll to services section
         const servicesSection = document.getElementById('services');
+
         if (servicesSection) {
+          // ✅ Services found on current page
+          const feedbackMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: `✅ Showing you the services section...`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, feedbackMessage]);
+
           servicesSection.scrollIntoView({ behavior: 'smooth' });
-          // Close chat to show services
+
           setTimeout(() => {
             handleCloseChat();
-          }, 500);
+          }, 1500);
+        } else {
+          // ✅ ENHANCEMENT: Navigate to homepage services section
+          console.log('Services section not on current page. Navigating to homepage...');
+
+          const navMessage: Message = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: `✅ Taking you to the services section on the homepage...`,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, navMessage]);
+
+          // Navigate to homepage
+          navigate('/');
+
+          // Wait for page load, then scroll to services
+          setTimeout(() => {
+            const targetSection = document.getElementById('services');
+            if (targetSection) {
+              targetSection.scrollIntoView({ behavior: 'smooth' });
+            }
+            handleCloseChat();
+          }, 800);
         }
         break;
 
@@ -815,17 +936,33 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
       };
 
       recognitionInstance.onerror = (event: any) => {
-        // ✅ CRITICAL FIX #10: Better error handling with user feedback
+        // ✅ P0 FIX: Better error handling without alerts
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
 
         // Show user-friendly error message based on error type
+        let errorMsg = '';
         if (event.error === 'no-speech') {
           // Silent fail for no-speech - user just didn't say anything
+          errorMsg = '🎤 No speech detected. Please try again and speak clearly.';
         } else if (event.error === 'not-allowed') {
-          alert('⚠️ Microphone access denied. Please allow microphone access in your browser settings.');
+          errorMsg = '🎤 **Microphone access denied**\n\nPlease allow microphone access in your browser settings.';
         } else if (event.error === 'network') {
-          alert('⚠️ Network error. Please check your internet connection and try again.');
+          errorMsg = '🎤 **Network error**\n\nPlease check your internet connection and try again.';
+        } else if (event.error === 'aborted') {
+          // User stopped manually - no need to show error
+          return;
+        }
+
+        // Only show message if there's an actual error
+        if (errorMsg) {
+          const message: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: errorMsg,
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, message]);
         }
       };
 
@@ -856,6 +993,29 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     };
   }, [recognition]);
 
+  // ✅ P3 FIX: Keyboard shortcuts - Esc to close, Cmd/Ctrl+K to focus input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Esc to close chat
+      if (e.key === 'Escape' && chatState.isOpen) {
+        handleCloseChat();
+        return;
+      }
+
+      // Cmd+K (Mac) or Ctrl+K (Windows/Linux) to focus input
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k' && chatState.isOpen && !chatState.isWelcome) {
+        e.preventDefault();
+        const inputElement = document.querySelector('input[type="text"]') as HTMLInputElement;
+        if (inputElement) {
+          inputElement.focus();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [chatState.isOpen, chatState.isWelcome]);
+
   // ✅ Toggle Dark Mode
   const toggleTheme = () => {
     const newTheme = !isDarkMode;
@@ -863,28 +1023,37 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(newTheme));
   };
 
-  // ✅ P1 FIX: Save Chat History - Proactive message limit + better error handling
+  // ✅ P2 FIX: Save Chat History - Proactive warnings before auto-trim
   const saveChatHistory = (msgs: Message[]) => {
     try {
-      // ✅ P1 FIX: Proactively limit to last 50 messages to prevent quota issues
       const MAX_MESSAGES = 50;
+      const WARNING_THRESHOLD = 40;
       let messagesToSave = msgs;
 
+      // ✅ P2 FIX: Warn user at 40 messages (before auto-trim at 50)
+      if (msgs.length === WARNING_THRESHOLD) {
+        const warningMsg: Message = {
+          id: `warning-${Date.now()}`,
+          role: 'assistant',
+          content: `⚠️ **Chat history approaching limit** (${WARNING_THRESHOLD}/${MAX_MESSAGES} messages)\n\n💡 **Tip:** Use the **Export** button to save this conversation before it auto-trims!`,
+          timestamp: new Date(),
+        };
+        // Add warning to messages (but don't save it yet to avoid recursion)
+        setMessages(prev => [...prev, warningMsg]);
+      }
+
+      // Auto-trim at 50 messages
       if (msgs.length > MAX_MESSAGES) {
         console.log(`📦 Chat history exceeds ${MAX_MESSAGES} messages. Auto-trimming to prevent storage issues.`);
-        // Keep only the last MAX_MESSAGES messages
         messagesToSave = msgs.slice(-MAX_MESSAGES);
-
-        // Update state to match what we're saving (prevents desync)
         setMessages(messagesToSave);
 
-        // Show subtle notification (non-blocking)
+        // Show notification
         setChatState(prev => ({
           ...prev,
-          error: `Chat history auto-trimmed to last ${MAX_MESSAGES} messages to save space.`
+          error: `Chat history auto-trimmed to last ${MAX_MESSAGES} messages. Export important conversations!`
         }));
 
-        // Clear error after 5 seconds
         setTimeout(() => {
           setChatState(prev => ({ ...prev, error: null }));
         }, 5000);
@@ -964,7 +1133,13 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
 
           const history = JSON.parse(decrypted);
           if (Array.isArray(history) && history.length > 0) {
-            setMessages(history);
+            // ✅ P0 CRITICAL FIX: Convert timestamp strings back to Date objects
+            // This fixes the "timestamp.toLocaleTimeString is not a function" error
+            const deserializedHistory = history.map(msg => ({
+              ...msg,
+              timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+            }));
+            setMessages(deserializedHistory);
             setChatState(prev => ({ ...prev, isWelcome: false }));
           }
         } catch (decryptError) {
@@ -1021,25 +1196,67 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     URL.revokeObjectURL(url);
   };
 
-  // ✅ CRITICAL FIX #5: Voice Input Toggle with better error handling
-  const toggleVoiceInput = () => {
+  // ✅ CRITICAL FIX: Voice Input with ACTUAL permission request
+  const toggleVoiceInput = async () => {
     if (!recognition) {
-      alert('⚠️ Voice input not supported in this browser.\n\n✅ Supported browsers: Chrome, Edge, Safari (iOS)\n❌ Not supported: Firefox');
+      // Show inline message instead of alert
+      const errorMsg: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: '⚠️ Voice input is not supported in this browser.\n\n✅ **Supported:** Chrome, Edge, Safari\n❌ **Not supported:** Firefox\n\nPlease type your message instead.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
       return;
     }
 
     if (isListening) {
       recognition.stop();
       setIsListening(false);
-    } else {
-      try {
-        recognition.start();
-        setIsListening(true);
-      } catch (error) {
-        console.error('Failed to start voice recognition:', error);
-        setIsListening(false);
-        alert('⚠️ Failed to start voice input. Please ensure:\n\n1. Microphone is connected\n2. Browser has microphone permission\n3. Microphone is not being used by another app');
+      return;
+    }
+
+    // ✅ CRITICAL FIX: Actually request microphone permission using getUserMedia
+    // This triggers the browser's native permission prompt
+    try {
+      console.log('🎤 Requesting microphone permission...');
+
+      // Request microphone access - this will show browser's permission prompt
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      console.log('✅ Microphone permission granted');
+
+      // Permission granted, now start speech recognition
+      recognition.start();
+      setIsListening(true);
+
+    } catch (error) {
+      console.error('❌ Microphone permission error:', error);
+      setIsListening(false);
+
+      // ✅ CRITICAL FIX: Handle specific permission errors
+      const err = error as Error;
+      let userMessage = '';
+
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        userMessage = '🎤 **Microphone access denied**\n\nYou clicked "Block" in the permission prompt.\n\nTo fix:\n1. Click the 🔒 lock icon in your address bar\n2. Change microphone to "Allow"\n3. Click the mic button again\n\nOr just type your message!';
+      } else if (err.name === 'NotFoundError') {
+        userMessage = '🎤 **No microphone found**\n\nPlease connect a microphone and try again, or type your message.';
+      } else if (err.name === 'NotReadableError') {
+        userMessage = '🎤 **Microphone is in use**\n\nAnother app (like Zoom, Teams, or Discord) might be using your microphone.\n\nClose other apps and try again, or type your message.';
+      } else if (err.name === 'SecurityError') {
+        userMessage = '🎤 **Security error**\n\nMicrophone access requires HTTPS. If you\'re on HTTP, please use HTTPS instead.\n\nOr just type your message!';
+      } else {
+        userMessage = `🎤 **Voice input failed**\n\nError: ${err.message}\n\nPlease type your message instead.`;
       }
+
+      const errorMsg: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: userMessage,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMsg]);
     }
   };
 
@@ -1124,6 +1341,19 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
       ...prev,
       isWelcome: false,
     }));
+
+    // ✅ P2 FIX: Add proactive engagement message for first-time users
+    if (messages.length === 0) {
+      setTimeout(() => {
+        const welcomeMsg: Message = {
+          id: `welcome-${Date.now()}`,
+          role: 'assistant',
+          content: `👋 Hi! I'm Sudharsan's AI assistant. I can help you:\n\n📅 **Book a consultation** for your project\n💰 **Get pricing** for websites & web apps\n✨ **Explore portfolio** of past work\n⚡ **Get a custom quote** tailored to your needs\n\nWhat interests you most?`,
+          timestamp: new Date(),
+        };
+        setMessages([welcomeMsg]);
+      }, 300);
+    }
   };
 
   const toggleFullScreen = () => {
@@ -1237,13 +1467,12 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     saveChatHistory(newMessages);
   };
 
-  // ✅ Quick Actions
-  // ✅ CRITICAL FIX: Quick actions now properly transition from welcome screen
+  // ✅ P1 FIX: Sales-optimized quick actions with conversion focus
   const quickActions = [
-    { icon: <MessageSquare className="w-4 h-4" />, label: "What services?", action: () => handleQuickAction("What services do you offer?") },
-    { icon: <DollarSign className="w-4 h-4" />, label: "Pricing", action: () => handleQuickAction("How much does a website cost?") },
-    { icon: <BookOpen className="w-4 h-4" />, label: "Portfolio", action: () => handleQuickAction("Show me your recent projects") },
-    { icon: <Clock className="w-4 h-4" />, label: "Timeline", action: () => handleQuickAction("How long does it take to build a website?") },
+    { icon: <Rocket className="w-4 h-4" />, label: "📅 Book Consultation", action: () => handleQuickAction("I want to book a free consultation to discuss my project") },
+    { icon: <DollarSign className="w-4 h-4" />, label: "💰 View Pricing", action: () => handleQuickAction("Show me your pricing and packages") },
+    { icon: <Sparkles className="w-4 h-4" />, label: "✨ See Live Work", action: () => handleQuickAction("Show me your best projects and client work") },
+    { icon: <Zap className="w-4 h-4" />, label: "⚡ Get Quote Now", action: () => handleQuickAction("I want to get a quote for my website project") },
   ];
 
   // ✅ CRITICAL FIX: Handle quick actions and prompts from welcome screen
@@ -1263,13 +1492,11 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     handleQuickAction(prompt);
   };
 
-  // ✅ CRITICAL FIX #4: Preview follow-up suggestions before sending
+  // ✅ CRITICAL FIX: Auto-send follow-up suggestions (user requested this)
   const handleFollowUpClick = (suggestion: string) => {
-    // Populate input box instead of sending immediately
-    // This gives users a chance to review/edit before sending
-    setInputValue(suggestion);
-    // Scroll to input area
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Directly send the message instead of filling input
+    // User wants instant action, not manual send
+    handleSendMessage(suggestion);
   };
 
   const handleSendMessage = async (promptText?: string) => {
@@ -1361,7 +1588,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
 
       const data = await response.json();
 
-      // ✅ PRODUCTION FIX: Enhanced error logging and handling
+      // ✅ P0 FIX: Enhanced error logging and handling with better success checking
       console.log('🔍 API Response:', {
         status: response.status,
         ok: response.ok,
@@ -1372,9 +1599,9 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
         userMessage: data.userMessage,
       });
 
-      // ✅ PRODUCTION FIX: Handle backend errors with detailed messages
-      if (!response.ok || data.error) {
-        // Backend returned an error response - show the user-friendly message
+      // ✅ P0 FIX: Handle backend errors properly - check success field AND error field
+      if (!response.ok || data.error || data.success === false) {
+        // Backend returned an error response - prioritize userMessage for user-friendly errors
         const errorContent = data.userMessage || data.message || 'I encountered a temporary issue. Please try again in a moment.';
 
         console.error('❌ Backend Error Response:', {
@@ -1385,10 +1612,23 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
           fullResponse: data,
         });
 
+        // ✅ P1 FIX: Categorize errors for better user experience
+        let displayMessage = errorContent;
+
+        // Add helpful context based on error type
+        if (data.error === 'QUOTA_EXCEEDED') {
+          displayMessage = `${errorContent}\n\n💡 **Tip:** High traffic right now. The AI will be ready in just a moment!`;
+        } else if (data.error === 'AUTH_ERROR') {
+          displayMessage = `${errorContent}\n\n📧 **Email:** sudharsanofficial0001@gmail.com`;
+        } else if (data.error === 'NETWORK_ERROR') {
+          displayMessage = `${errorContent}\n\n💡 **Tip:** Check your WiFi/data connection and try again.`;
+        }
+
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: errorContent,
+          content: displayMessage,
+          timestamp: new Date(),
         };
         const finalMessages = [...newMessages, errorMessage];
         setMessages(finalMessages);
@@ -1396,26 +1636,29 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
         return; // Exit early - don't continue to success block
       }
 
-      if (data.success && data.message) {
+      // ✅ CRITICAL FIX: Handle both messages AND function calls (function calls can have empty messages)
+      if (data.success && (data.message || data.functionCall)) {
         // ✅ CRITICAL FIX #9: Only increment count after successful API response
         setMessageCount(prev => prev + 1);
 
         const assistantMessageId = (Date.now() + 1).toString();
 
-        // ✅ Phase 2: Handle function calls from AI
+        // ✅ CRITICAL FIX: Handle function calls from AI - execute them immediately
         if (data.functionCall) {
           console.log('🎯 AI requested function call:', data.functionCall);
           executeFunctionCall(data.functionCall.name, data.functionCall.args);
-          // Show the message along with executing the function
+          // Note: executeFunctionCall now adds its own feedback messages
+          // Don't add duplicate messages here
+          return; // Exit early after executing function
         }
 
-        // ✅ Phase 1: Generate smart follow-up suggestions
+        // ✅ Phase 1: Generate smart follow-up suggestions (only for text messages)
         const followUps = getFollowUpSuggestions(messageText, data.message, context);
 
         const assistantMessage: Message = {
           id: assistantMessageId,
           role: 'assistant',
-          content: data.message || '✨ Taking you there now!',
+          content: data.message,
           serviceCards: intent.showCards ? intent.filteredServices : undefined,
           projectCards: projectIntent.showProjects ? projectIntent.filteredProjects : undefined, // ✅ Phase 1: Add project cards
           followUpSuggestions: followUps, // ✅ Phase 1: Add follow-up suggestions
@@ -1435,13 +1678,14 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
           ));
         }, (data.message?.length || 20) * 15 + 100); // Calculate based on text length
       } else {
-        // ✅ PRODUCTION FIX: This should rarely happen now that we check errors earlier
-        console.warn('⚠️ Unexpected response format:', data);
+        // ✅ CRITICAL FIX: Better error message for unexpected responses
+        console.error('❌ Unexpected response format:', data);
 
         const errorMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: 'I encountered a temporary issue. Please try again in a moment.',
+          content: '⚠️ Something went wrong with the AI response. Please try rephrasing your question or contact support.',
+          timestamp: new Date(),
         };
         const finalMessages = [...newMessages, errorMessage];
         setMessages(finalMessages);
@@ -1479,14 +1723,14 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     }
   };
 
-  // ✅ Suggested prompts
+  // ✅ P1 FIX: Action-oriented suggested prompts for better conversion
   const suggestedPrompts = [
-    "What services do you offer?",
-    "How much does a website cost?",
-    "Can you help with e-commerce?",
-    "Tell me about your process",
-    "Do you offer maintenance?",
-    "What's your turnaround time?"
+    "📅 Book a free consultation call",
+    "💰 Show me pricing for my project",
+    "✨ I want to see your portfolio",
+    "⚡ Get a custom quote",
+    "🚀 How fast can we start?",
+    "💬 Take me to contact form"
   ];
 
   // ✅ Filter messages by search
@@ -1705,6 +1949,18 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                   <p className={`text-xs sm:text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                     Sudharsan's AI delivers exceptional insights tailored to your needs.
                   </p>
+                  {/* ✅ P2 FIX: Add urgency/scarcity messaging */}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className={`mt-2 px-4 py-2 rounded-lg ${isDarkMode ? 'bg-amber-900/30 border border-amber-500/30' : 'bg-amber-50 border border-amber-300'}`}
+                  >
+                    <p className="text-xs font-semibold text-amber-500 flex items-center justify-center gap-2">
+                      <Zap className="w-3 h-3" />
+                      Limited Slots Available This Month
+                    </p>
+                  </motion.div>
                 </motion.div>
 
                 <motion.button
@@ -1900,25 +2156,31 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                       className={`flex-1 ${isDarkMode ? 'bg-slate-700/60 border-slate-600/50 text-white placeholder-slate-500' : 'bg-white border-slate-300 text-slate-900 placeholder-slate-400'} px-3 sm:px-4 py-2.5 sm:py-3 rounded-lg sm:rounded-xl border focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all text-sm disabled:opacity-50 backdrop-blur-sm`}
                     />
 
-                    {/* Voice Input - ✅ CRITICAL FIX #5: Better visibility and tooltips */}
+                    {/* Voice Input - ✅ P1 FIX: Better tooltips and visual feedback */}
                     {recognition && (
                       <motion.button
-                        whileHover={{ scale: 1.08 }}
-                        whileTap={{ scale: 0.92 }}
+                        whileHover={{ scale: isLoading ? 1 : 1.08 }}
+                        whileTap={{ scale: isLoading ? 1 : 0.92 }}
                         onClick={toggleVoiceInput}
                         disabled={isLoading}
-                        className={`w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 ${
+                        className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 ${
                           isListening
                             ? 'bg-red-500 hover:bg-red-600 animate-pulse'
-                            : 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700'
-                        } text-white rounded-lg sm:rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0`}
-                        title={isListening ? "🔴 Recording... Click to stop" : "🎤 Click to speak your message"}
+                            : 'bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700'
+                        } text-white rounded-lg sm:rounded-xl flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex-shrink-0 group`}
+                        title={isListening ? "🔴 Recording... Click to stop" : "🎤 Click and speak your message (Chrome, Edge, Safari)"}
                         aria-label={isListening ? "Stop voice input" : "Start voice input"}
                       >
                         {isListening ? (
                           <MicOff className="w-5 h-5" />
                         ) : (
                           <Mic className="w-5 h-5" />
+                        )}
+                        {/* ✅ P1 FIX: Tooltip on hover */}
+                        {!isListening && !isLoading && (
+                          <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                            🎤 Speak
+                          </div>
                         )}
                       </motion.button>
                     )}
@@ -1941,7 +2203,11 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
                     {messageCount >= MESSAGE_LIMIT ? (
                       <span className="text-red-400">Daily limit reached. Contact us for unlimited access.</span>
                     ) : (
-                      <>↵ Enter to send{recognition && ' • 🎤 Voice input available'} • Powered by Gemini AI</>
+                      <>
+                        ↵ Enter to send{recognition && ' • 🎤 Click mic to speak'}
+                        {!chatState.isWelcome && ' • ⌘K to focus • Esc to close'}
+                        {' '} • ⚡ Powered by Gemini AI
+                      </>
                     )}
                   </motion.p>
                 </div>
