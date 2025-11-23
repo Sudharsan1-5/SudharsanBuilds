@@ -43,6 +43,7 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
+  const [showPayPalButtons, setShowPayPalButtons] = useState(false); // ✅ NEW: Only show PayPal after validation
   const [showRegionDropdown, setShowRegionDropdown] = useState(false);
   const regionDropdownRef = useRef<HTMLDivElement>(null);
   const [customerDetails, setCustomerDetails] = useState({
@@ -163,6 +164,7 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       const handleEscape = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
           setShowBookingModal(false);
+          setShowPayPalButtons(false); // ✅ Reset PayPal buttons on Escape
         }
       };
 
@@ -566,8 +568,8 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
               razorpayPaymentId: razorpayResponse.razorpay_payment_id,
               razorpayOrderId: razorpayResponse.razorpay_order_id,
               razorpaySignature: razorpayResponse.razorpay_signature,
-              currency_symbol: currency.symbol,
-              currency_locale: currency.locale,
+              currency_symbol: currency?.symbol || '$',
+              currency_locale: currency?.locale || 'en-US',
             });
 
             // ✅ P1 FIX: Show email failure warning if needed
@@ -791,8 +793,8 @@ window.paypal.Buttons({
         razorpayPaymentId: data.orderID,
         razorpayOrderId: data.orderID,
         razorpaySignature: '',
-        currency_symbol: currency.symbol,
-        currency_locale: currency.locale,
+        currency_symbol: currency?.symbol || '$',
+        currency_locale: currency?.locale || 'en-US',
       });
 
       const hasEmailIssue = invoiceResult.message.includes('⚠️') || invoiceResult.message.includes('❌');
@@ -854,8 +856,9 @@ window.paypal.Buttons({
 
   // ✅ Render PayPal Buttons in Modal (Global Region Only)
   // ✅ CRITICAL FIX: Removed customerDetails from dependency array to prevent re-rendering on every keystroke
+  // ✅ NEW: Only render when showPayPalButtons is true (after validation)
   useEffect(() => {
-    if (showBookingModal && payment.gateway === 'paypal' && paypalLoaded && window.paypal && selectedService) {
+    if (showBookingModal && payment.gateway === 'paypal' && paypalLoaded && window.paypal && selectedService && showPayPalButtons) {
       const container = document.getElementById('paypal-button-container-modal');
       if (!container) return;
 
@@ -1039,7 +1042,7 @@ window.paypal.Buttons({
         }
       }).render('#paypal-button-container-modal');
     }
-  }, [showBookingModal, payment.gateway, paypalLoaded, selectedService, navigate]); // ✅ Removed customerDetails from deps
+  }, [showBookingModal, payment.gateway, paypalLoaded, selectedService, showPayPalButtons, navigate, currency]); // ✅ Added showPayPalButtons and currency
 
   // ✅ Main Payment Handler - Routes to correct payment gateway
   const handlePaymentProceed = async () => {
@@ -1076,13 +1079,40 @@ window.paypal.Buttons({
     }
 
     setValidationErrors({});
-    setIsPaymentLoading(true);
 
-    // Wait for payment gateway to load
-    const isRazorpay = payment.gateway === 'razorpay';
+    // ✅ NEW: For PayPal, show buttons in modal after validation
     const isPayPal = payment.gateway === 'paypal';
 
-    if (isRazorpay && (!razorpayLoaded || !window.Razorpay)) {
+    if (isPayPal) {
+      // ✅ PayPal: Keep modal open, just show PayPal buttons
+      if (!paypalLoaded || !window.paypal) {
+        setIsPaymentLoading(true);
+        let retries = 0;
+        const maxRetries = 30;
+
+        while (retries < maxRetries) {
+          if (window.paypal && paypalLoaded) break;
+          await new Promise(resolve => setTimeout(resolve, 500));
+          retries++;
+        }
+
+        if (!window.paypal || !paypalLoaded) {
+          setIsPaymentLoading(false);
+          alert('⚠️ Payment system failed to load. Please refresh the page and try again.\n\nIf the issue persists, contact us at:\nsudharsanofficial0001@gmail.com');
+          return;
+        }
+        setIsPaymentLoading(false);
+      }
+
+      // Show PayPal buttons (validation passed)
+      setShowPayPalButtons(true);
+      return;
+    }
+
+    // ✅ Razorpay: Original flow (close modal, open Razorpay)
+    setIsPaymentLoading(true);
+
+    if (!razorpayLoaded || !window.Razorpay) {
       let retries = 0;
       const maxRetries = 30;
 
@@ -1099,36 +1129,9 @@ window.paypal.Buttons({
       }
     }
 
-    if (isPayPal && (!paypalLoaded || !window.paypal)) {
-      let retries = 0;
-      const maxRetries = 30;
-
-      while (retries < maxRetries) {
-        if (window.paypal && paypalLoaded) break;
-        await new Promise(resolve => setTimeout(resolve, 500));
-        retries++;
-      }
-
-      if (!window.paypal || !paypalLoaded) {
-        setIsPaymentLoading(false);
-        alert('⚠️ Payment system failed to load. Please refresh the page and try again.\n\nIf the issue persists, contact us at:\nsudharsanofficial0001@gmail.com');
-        return;
-      }
-    }
-
-    // Close modal before payment
+    // Close modal before Razorpay payment
     setShowBookingModal(false);
-
-    // Route to correct payment handler
-    if (isRazorpay) {
-      await processRazorpayPayment();
-    } else if (isPayPal) {
-      await processPayPalPayment();
-    } else {
-      console.error('❌ Unknown payment gateway:', payment.gateway);
-      alert('⚠️ Payment system configuration error. Please contact support.');
-      setIsPaymentLoading(false);
-    }
+    await processRazorpayPayment();
   };
 
   return (
@@ -1430,7 +1433,10 @@ window.paypal.Buttons({
                     </p>
                   </div>
                   <button
-                    onClick={() => setShowBookingModal(false)}
+                    onClick={() => {
+                      setShowBookingModal(false);
+                      setShowPayPalButtons(false); // ✅ Reset PayPal buttons on close
+                    }}
                     className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
                     aria-label="Close modal (Press Escape)"
                     title="Close (Esc)"
@@ -1637,12 +1643,35 @@ window.paypal.Buttons({
                         {isPaymentLoading ? 'Processing...' : 'Proceed to Payment'}
                       </button>
                     </div>
+                  ) : !showPayPalButtons ? (
+                    // ✅ NEW: Global - Show validation button first (like Razorpay)
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          setShowBookingModal(false);
+                          setShowPayPalButtons(false);
+                        }}
+                        className="flex-1 px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handlePaymentProceed}
+                        disabled={isPaymentLoading}
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg hover:shadow-cyan-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isPaymentLoading ? 'Loading...' : 'Proceed to Payment'}
+                      </button>
+                    </div>
                   ) : (
-                    // Global: Show PayPal buttons inline
+                    // ✅ PayPal buttons (shown after validation passes)
                     <div className="space-y-3">
                       <div id="paypal-button-container-modal" className="min-h-[45px]"></div>
                       <button
-                        onClick={() => setShowBookingModal(false)}
+                        onClick={() => {
+                          setShowBookingModal(false);
+                          setShowPayPalButtons(false);
+                        }}
                         className="w-full px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors"
                       >
                         Cancel
