@@ -821,6 +821,7 @@ window.paypal.Buttons({
   };
 
   // ✅ Render PayPal Buttons in Modal (Global Region Only)
+  // ✅ CRITICAL FIX: Removed customerDetails from dependency array to prevent re-rendering on every keystroke
   useEffect(() => {
     if (showBookingModal && payment.gateway === 'paypal' && paypalLoaded && window.paypal && selectedService) {
       const container = document.getElementById('paypal-button-container-modal');
@@ -831,24 +832,47 @@ window.paypal.Buttons({
 
       const totalAmount = selectedService.totalAmount || selectedService.depositAmount;
 
-      // Render PayPal buttons
+      // Render PayPal buttons with proper styling
       window.paypal.Buttons({
         style: {
           layout: 'vertical',
-          color: 'blue',
+          color: 'gold',    // ✅ Changed from 'blue' to 'gold' for proper PayPal branding
           shape: 'rect',
-          label: 'paypal',
-          height: 45
+          label: 'paypal',  // Shows PayPal logo with text
+          height: 45,
+          tagline: false    // Remove "The safer, easier way to pay" tagline
         },
         createOrder: async () => {
           try {
-            // Validate before creating order
-            if (!customerDetails.name || !customerDetails.email || !customerDetails.projectDetails) {
+            // ✅ FIX: Validate fields using current DOM values (not stale state)
+            const nameInput = document.getElementById('modal-name') as HTMLInputElement;
+            const emailInput = document.getElementById('modal-email') as HTMLInputElement;
+            const detailsInput = document.getElementById('modal-details') as HTMLTextAreaElement;
+
+            const currentName = nameInput?.value || '';
+            const currentEmail = emailInput?.value || '';
+            const currentDetails = detailsInput?.value || '';
+
+            if (!currentName.trim() || !currentEmail.trim() || !currentDetails.trim()) {
+              alert('❌ Please fill in all required fields (Name, Email, and Project Details) before proceeding with payment.');
               throw new Error('Please fill in all required fields');
+            }
+
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(currentEmail)) {
+              alert('❌ Please enter a valid email address.');
+              throw new Error('Invalid email format');
             }
 
             const createOrderUrl = `${env.SUPABASE_URL}/functions/v1/create-paypal-order`;
             const csrfToken = sessionStorage.getItem('csrf_token');
+
+            console.log('📤 Creating PayPal order with:', {
+              amount: selectedService.depositAmount,
+              service_name: selectedService.name,
+              customer_email: currentEmail
+            });
 
             const response = await fetch(createOrderUrl, {
               method: 'POST',
@@ -859,16 +883,40 @@ window.paypal.Buttons({
               },
               body: JSON.stringify({
                 amount: selectedService.depositAmount,
-                service_name: selectedService.name
+                service_name: selectedService.name,
+                customer_name: currentName,
+                customer_email: currentEmail,
+                customer_details: currentDetails
               })
             });
 
+            // ✅ CRITICAL FIX: Check response status before parsing
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error('❌ PayPal order creation failed:', {
+                status: response.status,
+                statusText: response.statusText,
+                error: errorText
+              });
+              alert(`❌ Failed to create payment order (${response.status}). Please try again or contact support.`);
+              throw new Error(`Failed to create order: ${response.status} ${errorText}`);
+            }
+
             const data = await response.json();
-            console.log('✅ PayPal order created:', data.id);
+            console.log('📥 PayPal order response:', data);
+
+            // ✅ CRITICAL FIX: Validate response structure
+            if (!data || !data.id) {
+              console.error('❌ Invalid order response - missing order ID:', data);
+              alert('❌ Invalid payment response. Please try again or contact support.');
+              throw new Error('Invalid order response: missing order ID');
+            }
+
+            console.log('✅ PayPal order created successfully:', data.id);
             return data.id;
           } catch (error) {
             console.error('❌ Order creation error:', error);
-            alert('Please fill in all required fields before proceeding');
+            // Re-throw to let PayPal SDK handle it
             throw error;
           }
         },
@@ -878,6 +926,17 @@ window.paypal.Buttons({
           setShowBookingModal(false);
 
           try {
+            // Get current form values
+            const nameInput = document.getElementById('modal-name') as HTMLInputElement;
+            const emailInput = document.getElementById('modal-email') as HTMLInputElement;
+            const phoneInput = document.querySelector('input[type="tel"]') as HTMLInputElement;
+            const detailsInput = document.getElementById('modal-details') as HTMLTextAreaElement;
+
+            const currentName = nameInput?.value || '';
+            const currentEmail = emailInput?.value || '';
+            const currentPhone = phoneInput?.value || '';
+            const currentDetails = detailsInput?.value || '';
+
             // Capture payment
             const captureUrl = `${env.SUPABASE_URL}/functions/v1/capture-paypal-payment`;
             const captureResponse = await fetch(captureUrl, {
@@ -888,7 +947,7 @@ window.paypal.Buttons({
               },
               body: JSON.stringify({
                 orderId: data.orderID,
-                customer_email: customerDetails.email,
+                customer_email: currentEmail,
                 amount: selectedService.depositAmount,
                 service_name: selectedService.name
               })
@@ -904,14 +963,14 @@ window.paypal.Buttons({
 
             // Generate invoice
             const invoiceResult = await generateAndSendInvoice({
-              name: customerDetails.name,
-              email: customerDetails.email,
-              phone: customerDetails.phone,
+              name: currentName,
+              email: currentEmail,
+              phone: currentPhone,
               service: selectedService.name,
               amount: totalAmount!,
               depositAmount: selectedService.depositAmount!,
               timeline: selectedService.timeline,
-              projectDetails: customerDetails.projectDetails,
+              projectDetails: currentDetails,
               razorpayPaymentId: data.orderID,
               razorpayOrderId: data.orderID,
               razorpaySignature: ''
@@ -922,8 +981,8 @@ window.paypal.Buttons({
               invoiceId: invoiceResult.invoiceId || 'N/A',
               paymentId: data.orderID,
               service: selectedService.name,
-              name: customerDetails.name,
-              email: customerDetails.email,
+              name: currentName,
+              email: currentEmail,
               deposit: selectedService.depositAmount!.toString(),
               total: totalAmount!.toString(),
               emailStatus: 'success'
@@ -933,7 +992,7 @@ window.paypal.Buttons({
             navigate(`/payment-confirmation?${confirmationUrl.toString()}`);
           } catch (error) {
             console.error('❌ Payment error:', error);
-            alert('Payment processing failed. Please contact support with Order ID: ' + data.orderID);
+            alert('❌ Payment processing failed. Please contact support with Order ID: ' + data.orderID);
             setShowBookingModal(true);
           } finally {
             setIsPaymentLoading(false);
@@ -941,14 +1000,14 @@ window.paypal.Buttons({
         },
         onError: (err: any) => {
           console.error('❌ PayPal error:', err);
-          alert('Payment failed. Please try again.');
+          alert('❌ Payment failed. Please try again.');
         },
         onCancel: () => {
           console.log('ℹ️ Payment cancelled');
         }
       }).render('#paypal-button-container-modal');
     }
-  }, [showBookingModal, payment.gateway, paypalLoaded, selectedService, customerDetails, navigate]);
+  }, [showBookingModal, payment.gateway, paypalLoaded, selectedService, navigate]); // ✅ Removed customerDetails from deps
 
   // ✅ Main Payment Handler - Routes to correct payment gateway
   const handlePaymentProceed = async () => {
