@@ -1522,7 +1522,7 @@ window.paypal.Buttons({
                   </label>
                   <PhoneInput
                     international
-                    defaultCountry="IN"
+                    defaultCountry={regionConfig.region === 'india' ? 'IN' : 'US'}
                     value={customerDetails.phone}
                     onChange={(value) => {
                       setCustomerDetails({ ...customerDetails, phone: value || '' });
