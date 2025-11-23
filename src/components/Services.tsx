@@ -1,4 +1,4 @@
-import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, X, ArrowRight } from 'lucide-react';
+import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, X, ArrowRight, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -8,7 +8,7 @@ import { sendBookingConfirmation, sendNewBookingAlert } from '../services/emailS
 import { generateAndSendInvoice } from '../services/invoiceService';
 import { env, features } from '../utils/env';
 import { validatePhone } from '../utils/validation'; // ✅ FIX: Use shared validation
-import { getActiveRegion, formatCurrency } from '../config/regions';
+import { getActiveRegion, formatCurrency, indiaConfig, globalConfig } from '../config/regions';
 
 // TypeScript declarations for payment gateways
 declare global {
@@ -43,6 +43,8 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
+  const [showRegionDropdown, setShowRegionDropdown] = useState(false);
+  const regionDropdownRef = useRef<HTMLDivElement>(null);
   const [customerDetails, setCustomerDetails] = useState({
     name: '',
     email: '',
@@ -70,6 +72,32 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       console.log('✅ CSRF token generated for payment security');
     }
   }, []);
+
+  // ✅ Region dropdown: Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (regionDropdownRef.current && !regionDropdownRef.current.contains(event.target as Node)) {
+        setShowRegionDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Region switch handler
+  const handleRegionSwitch = (regionCode: 'india' | 'global') => {
+    if (regionCode === regionConfig.region) {
+      setShowRegionDropdown(false);
+      return;
+    }
+
+    const targetDomain = regionCode === 'india' ? indiaConfig.domain : globalConfig.domain;
+    const protocol = window.location.protocol;
+    const path = window.location.pathname;
+    const newUrl = `${protocol}//${targetDomain}${path}`;
+    window.location.href = newUrl;
+  };
 
   // ✅ LAZY LOAD: EmailJS now initializes only when actually sending emails (in handlePaymentProceed)
 
@@ -1122,22 +1150,73 @@ window.paypal.Buttons({
             Transparent pricing with no hidden fees. Choose the package that fits your needs.
           </motion.p>
 
-          {/* ✅ Region Indicator - Subtle but important */}
+          {/* ✅ Region Switcher - Clickable badge for easy switching */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
             className="absolute top-0 right-0 md:right-4"
+            ref={regionDropdownRef}
           >
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border-2 ${
-              regionConfig.region === 'india'
-                ? 'bg-orange-50 border-orange-300 text-orange-700'
-                : 'bg-blue-50 border-blue-300 text-blue-700'
-            }`}>
+            <button
+              onClick={() => setShowRegionDropdown(!showRegionDropdown)}
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border-2 transition-all hover:shadow-md ${
+                regionConfig.region === 'india'
+                  ? 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
+                  : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100'
+              }`}
+            >
               <span className="text-base">{regionConfig.region === 'india' ? '🇮🇳' : '🌍'}</span>
               <span>{regionConfig.region === 'india' ? 'India' : 'Global'} - {currency.symbol}</span>
-            </div>
+              <ChevronDown className={`w-3 h-3 transition-transform ${showRegionDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {showRegionDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50"
+                >
+                  <div className="py-1">
+                    <button
+                      onClick={() => handleRegionSwitch('india')}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 transition-colors ${
+                        regionConfig.region === 'india' ? 'bg-orange-50' : ''
+                      }`}
+                    >
+                      <span className="text-xl">🇮🇳</span>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium text-gray-900 text-sm">India</div>
+                        <div className="text-xs text-gray-500">Pricing in ₹</div>
+                      </div>
+                      {regionConfig.region === 'india' && (
+                        <Check className="w-4 h-4 text-orange-600" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleRegionSwitch('global')}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 transition-colors ${
+                        regionConfig.region === 'global' ? 'bg-blue-50' : ''
+                      }`}
+                    >
+                      <span className="text-xl">🌍</span>
+                      <div className="flex-1 text-left">
+                        <div className="font-medium text-gray-900 text-sm">Global</div>
+                        <div className="text-xs text-gray-500">Pricing in $</div>
+                      </div>
+                      {regionConfig.region === 'global' && (
+                        <Check className="w-4 h-4 text-blue-600" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
 
