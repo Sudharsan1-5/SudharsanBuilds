@@ -1,8 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+// ✅ FIX: Use correct environment variable names (without VITE_ prefix for Edge Functions)
 const PAYPAL_CLIENT_ID = Deno.env.get("PAYPAL_CLIENT_ID");
 const PAYPAL_CLIENT_SECRET = Deno.env.get("PAYPAL_CLIENT_SECRET");
-const IS_PRODUCTION = Deno.env.get("VITE_PAYPAL_MODE") === "production";
+const IS_PRODUCTION = Deno.env.get("PAYPAL_MODE") === "production";
 
 // ✅ Use sandbox API for testing, production API for live
 const PAYPAL_API_BASE = IS_PRODUCTION
