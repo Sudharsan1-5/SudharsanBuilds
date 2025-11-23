@@ -1537,6 +1537,7 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
     { icon: <DollarSign className="w-4 h-4" />, label: "💰 View Pricing", action: () => handleQuickAction("Show me your pricing and packages") },
     { icon: <Sparkles className="w-4 h-4" />, label: "✨ See Live Work", action: () => handleQuickAction("Show me your best projects and client work") },
     { icon: <Zap className="w-4 h-4" />, label: "⚡ Get Quote Now", action: () => handleQuickAction("I want to get a quote for my website project") },
+    { icon: <BookOpen className="w-4 h-4" />, label: "📄 Summarize Page", action: () => handleQuickAction("Can you summarize this page for me?") },
   ];
 
   // ✅ CRITICAL FIX: Handle quick actions and prompts from welcome screen

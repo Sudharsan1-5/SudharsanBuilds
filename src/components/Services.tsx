@@ -44,6 +44,10 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     projectDetails?: string;
   }>({});
 
+  // ✅ SUCCESS OVERLAY: Show immediately after payment verification
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('Payment Successful!');
+
   // ✅ ACCESSIBILITY: Focus management for modal
   const modalRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
@@ -130,6 +134,12 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
         document.removeEventListener('keydown', handleEscape);
         document.removeEventListener('keydown', handleTab);
       };
+    } else {
+      // ✅ CRITICAL FIX: Reset all state when modal closes (fixes retry payment issue)
+      setIsPaymentLoading(false);
+      setValidationErrors({});
+      setShowSuccessOverlay(false);
+      setSuccessMessage('Payment Successful!');
     }
   }, [showBookingModal]);
 
@@ -539,6 +549,14 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
 
             console.log('✅ Payment verified successfully');
 
+            // ✅ CRITICAL FIX: Show success overlay IMMEDIATELY (before invoice generation)
+            setShowSuccessOverlay(true);
+            setSuccessMessage('✓ Payment Successful!');
+
+            // Small delay for visual feedback
+            await new Promise(resolve => setTimeout(resolve, 600));
+            setSuccessMessage('📄 Generating your invoice...');
+
             // Generate invoice and send all emails
             const invoiceResult = await generateAndSendInvoice({
               name: customerDetails.name,
@@ -572,6 +590,13 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
               alert(`Payment successful! However:\n\n${invoiceResult.message}\n\nYou'll be redirected to your confirmation page.`);
             }
 
+            // Update overlay message
+            await new Promise(resolve => setTimeout(resolve, 600));
+            setSuccessMessage('📧 Sending confirmation email...');
+
+            await new Promise(resolve => setTimeout(resolve, 600));
+            setSuccessMessage('🎉 Redirecting to confirmation...');
+
             // ✅ P0 FIX: Navigate to confirmation page
             // Build URL with payment details
             const confirmationUrl = new URLSearchParams({
@@ -593,8 +618,14 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
               projectDetails: ''
             });
 
+            // Small delay before redirect
+            await new Promise(resolve => setTimeout(resolve, 400));
+
             // Navigate to confirmation page
             navigate(`/payment-confirmation?${confirmationUrl.toString()}`);
+
+            // Hide overlay after navigation
+            setShowSuccessOverlay(false);
           } catch (error) {
             console.error('❌ Payment processing error:', error);
             alert(`⚠️ Payment received but verification failed.\n\nPayment ID: ${razorpayResponse.razorpay_payment_id}\n\nPlease contact support to confirm your booking.`);
@@ -1099,6 +1130,60 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ✅ SUCCESS OVERLAY: Shows IMMEDIATELY after payment verification */}
+      <AnimatePresence>
+        {showSuccessOverlay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 max-w-md w-full text-center"
+            >
+              {/* Animated Checkmark */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                className="w-24 h-24 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center"
+              >
+                <motion.div
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                >
+                  <CheckCircle2 className="w-16 h-16 text-green-600" />
+                </motion.div>
+              </motion.div>
+
+              {/* Dynamic Message */}
+              <motion.h2
+                key={successMessage}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-2xl md:text-3xl font-bold text-slate-900 mb-4"
+              >
+                {successMessage}
+              </motion.h2>
+
+              {/* Progress Spinner */}
+              {(successMessage.includes('Generating') ||
+                successMessage.includes('Sending') ||
+                successMessage.includes('Redirecting')) && (
+                <div className="flex justify-center">
+                  <div className="w-8 h-8 border-4 border-cyan-200 border-t-cyan-600 rounded-full animate-spin"></div>
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}
