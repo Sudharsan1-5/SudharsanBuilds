@@ -1136,7 +1136,7 @@ window.paypal.Buttons({
                 : 'bg-blue-50 border-blue-300 text-blue-700'
             }`}>
               <span className="text-base">{regionConfig.region === 'india' ? '🇮🇳' : '🌍'}</span>
-              <span>{regionConfig.region === 'india' ? 'India' : 'Global'} - {currency}</span>
+              <span>{regionConfig.region === 'india' ? 'India' : 'Global'} - {currency.symbol}</span>
             </div>
           </motion.div>
         </div>

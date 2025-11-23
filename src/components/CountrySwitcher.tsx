@@ -74,7 +74,7 @@ export default function CountrySwitcher() {
       >
         <span className="text-xl">{activeRegion.flag}</span>
         <span className="text-sm font-medium">
-          {activeRegion.name} - Pricing in {currentRegion.currency}
+          {activeRegion.name} - Pricing in {currentRegion.currency.symbol}
         </span>
         <ChevronDown
           className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
