@@ -1133,14 +1133,30 @@ window.paypal.Buttons({
         onApprove: async (data: any) => {
           console.log('✅ PayPal Payment Approved:', data.orderID);
 
-          // ✅ CRITICAL FIX: Capture form values from React state (now updated in onClick)
-          const currentName = customerDetails.name;
-          const currentEmail = customerDetails.email;
-          const currentPhone = customerDetails.phone;
-          const currentDetails = customerDetails.projectDetails;
+          // ✅ Wait for PayPal modal to close first (critical timing!)
+          await new Promise(resolve => setTimeout(resolve, 1500));
 
-          // ✅ CRITICAL FIX: Use flushSync to FORCE immediate rendering of overlay
-          // This ensures overlay shows BEFORE any async work starts (like Razorpay)
+          // ✅ REAL FIX: Read form values from DOM BEFORE closing our modal!
+          // Must read AFTER PayPal modal closes but BEFORE our modal closes
+          const nameInput = document.getElementById('modal-name') as HTMLInputElement;
+          const emailInput = document.getElementById('modal-email') as HTMLInputElement;
+          const phoneInput = document.querySelector('input[type="tel"]') as HTMLInputElement;
+          const detailsInput = document.getElementById('modal-details') as HTMLTextAreaElement;
+
+          const currentName = nameInput?.value?.trim() || '';
+          const currentEmail = emailInput?.value?.trim() || '';
+          const currentPhone = phoneInput?.value || '';
+          const currentDetails = detailsInput?.value?.trim() || '';
+
+          console.log('📋 Captured form data:', { name: currentName, email: currentEmail });
+
+          if (!currentEmail || !currentName) {
+            console.error('❌ CRITICAL: Form data is empty!', { currentName, currentEmail });
+            alert('Error: Could not retrieve your information. Please contact support with Order ID: ' + data.orderID);
+            return;
+          }
+
+          // ✅ NOW close modal and show overlay immediately (user sees progress instantly)
           flushSync(() => {
             setShowBookingModal(false);
             setShowSuccessOverlay(true);
@@ -1150,7 +1166,7 @@ window.paypal.Buttons({
           console.log('💳 Progress overlay now visible, starting payment processing...');
 
           // Wait for overlay animation to render
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 800));
 
           try {
             // Update overlay for capture step
