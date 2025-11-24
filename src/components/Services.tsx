@@ -203,6 +203,7 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       setShowSuccessOverlay(false);
       setSuccessMessage('Payment Successful!');
       setShowPayPalButtons(false);
+      // Don't reset razorpayLoaded/paypalLoaded - scripts stay loaded for performance
     }
   }, [showBookingModal]);
 
@@ -779,8 +780,16 @@ window.paypal.Buttons({
   },
   onApprove: async (data: any, actions: any) => {
     console.log('✅ PayPal Payment Approved:', data);
-    
+
+    // ✅ CRITICAL FIX: Show success overlay IMMEDIATELY (no delay!)
+    setShowSuccessOverlay(true);
+    setSuccessMessage('✓ Payment Successful!');
+
     try {
+      // Small delay for visual feedback
+      await new Promise(resolve => setTimeout(resolve, 600));
+      setSuccessMessage('🔍 Verifying payment...');
+
       // Call verify-paypal-payment function instead of capture
       const verifyUrl = `${env.SUPABASE_URL}/functions/v1/verify-paypal-payment`;
 
@@ -802,6 +811,7 @@ window.paypal.Buttons({
 
       if (!verifyResult.success) {
         console.error('❌ Payment verification failed:', verifyResult);
+        setShowSuccessOverlay(false);
         alert('❌ Payment verification failed. Please contact support.');
         setIsPaymentLoading(false);
         paypalContainer.remove();
@@ -810,11 +820,7 @@ window.paypal.Buttons({
 
       console.log('✅ Payment verified successfully');
 
-      // ✅ CRITICAL FIX: Show success overlay IMMEDIATELY (before invoice generation)
-      setShowSuccessOverlay(true);
-      setSuccessMessage('✓ Payment Successful!');
-
-      // Small delay for visual feedback
+      // Update overlay message
       await new Promise(resolve => setTimeout(resolve, 600));
       setSuccessMessage('📄 Generating your invoice...');
 
@@ -1116,7 +1122,11 @@ window.paypal.Buttons({
       errors.email = 'Please enter a valid email address';
     }
 
-    if (customerDetails.phone && customerDetails.phone.trim() && !validatePhone(customerDetails.phone)) {
+    // ✅ FIX: Phone is optional - only validate if user actually entered a phone number
+    // Country codes can be 1-3 digits (+1, +91, +852, etc.)
+    // So check if phone has at least 6 total digits (country code + actual number)
+    const phoneDigitsOnly = customerDetails.phone?.replace(/\D/g, '') || '';
+    if (customerDetails.phone && phoneDigitsOnly.length >= 6 && !validatePhone(customerDetails.phone)) {
       errors.phone = 'Please enter a valid phone number (8-15 digits, no leading zero)';
     }
 
