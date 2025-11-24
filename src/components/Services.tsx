@@ -1156,17 +1156,27 @@ window.paypal.Buttons({
             return;
           }
 
-          // ✅ NOW close modal and show overlay immediately (user sees progress instantly)
+          // ✅ CRITICAL FIX: Show overlay FIRST (on top of booking modal with z-9999)
+          // This ensures user sees it immediately while booking modal is still visible
           flushSync(() => {
-            setShowBookingModal(false);
             setShowSuccessOverlay(true);
             setSuccessMessage('✓ Payment Successful!');
           });
 
-          console.log('💳 Progress overlay now visible, starting payment processing...');
+          console.log('💳 Progress overlay now showing on top of booking modal (z-9999)');
 
-          // Wait for overlay animation to render
-          await new Promise(resolve => setTimeout(resolve, 800));
+          // Small delay to ensure overlay is fully rendered and visible
+          await new Promise(resolve => setTimeout(resolve, 300));
+
+          // NOW close the booking modal (fades out behind overlay - user doesn't notice)
+          flushSync(() => {
+            setShowBookingModal(false);
+          });
+
+          console.log('🎯 Booking modal closed, overlay remains visible');
+
+          // Wait for overlay to be stable before continuing with backend work
+          await new Promise(resolve => setTimeout(resolve, 500));
 
           try {
             // Update overlay for capture step
