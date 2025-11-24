@@ -1,7 +1,6 @@
 import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, X, ArrowRight, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { flushSync } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
@@ -1156,35 +1155,20 @@ window.paypal.Buttons({
             return;
           }
 
-          // ✅ CRITICAL FIX: Show overlay FIRST (on top of booking modal with z-9999)
-          // This ensures user sees it immediately while booking modal is still visible
-          flushSync(() => {
-            setShowSuccessOverlay(true);
-            setSuccessMessage('✓ Payment Successful!');
-          });
+          // ✅ CRITICAL FIX: Copy EXACTLY what Razorpay does - just show overlay!
+          // Don't close booking modal, don't use flushSync - keep it simple
+          setShowSuccessOverlay(true);
+          setSuccessMessage('✓ Payment Successful!');
 
-          console.log('💳 Progress overlay now showing on top of booking modal (z-9999)');
+          console.log('💳 Progress overlay should now be visible (z-9999 on top of booking modal z-50)');
 
-          // Small delay to ensure overlay is fully rendered and visible
-          await new Promise(resolve => setTimeout(resolve, 300));
-
-          // NOW close the booking modal (fades out behind overlay - user doesn't notice)
-          flushSync(() => {
-            setShowBookingModal(false);
-          });
-
-          console.log('🎯 Booking modal closed, overlay remains visible');
-
-          // Wait for overlay to be stable before continuing with backend work
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Small delay for visual feedback (same as Razorpay line 616)
+          await new Promise(resolve => setTimeout(resolve, 600));
 
           try {
             // Update overlay for capture step
+            setSuccessMessage('🔍 Verifying payment...');
             console.log('🔍 Verifying payment...');
-            flushSync(() => {
-              setSuccessMessage('🔍 Verifying payment...');
-            });
-            await new Promise(resolve => setTimeout(resolve, 800));
 
             // Capture payment
             const captureUrl = `${env.SUPABASE_URL}/functions/v1/capture-paypal-payment`;
@@ -1210,13 +1194,10 @@ window.paypal.Buttons({
 
             console.log('✅ Payment captured');
 
-            // Update overlay for invoice generation - SYNC with console
+            // Update overlay for invoice generation
             await new Promise(resolve => setTimeout(resolve, 600));
+            setSuccessMessage('📄 Generating your invoice...');
             console.log('📄 Generating your invoice...');
-            flushSync(() => {
-              setSuccessMessage('📄 Generating your invoice...');
-            });
-            await new Promise(resolve => setTimeout(resolve, 400));
 
             // Generate invoice
             const invoiceResult = await generateAndSendInvoice({
@@ -1237,22 +1218,14 @@ window.paypal.Buttons({
 
             console.log('✅ Invoice generated:', invoiceResult.invoiceId);
 
-            // Update overlay for email step - SYNC with console
+            // Update overlay for email step
             await new Promise(resolve => setTimeout(resolve, 600));
+            setSuccessMessage('📧 Sending confirmation email...');
             console.log('📧 Sending confirmation email...');
-            flushSync(() => {
-              setSuccessMessage('📧 Sending confirmation email...');
-            });
-            await new Promise(resolve => setTimeout(resolve, 400));
 
-            console.log('✅ Email sent successfully');
-
-            // Final overlay message before redirect
             await new Promise(resolve => setTimeout(resolve, 600));
+            setSuccessMessage('🎉 Redirecting to confirmation...');
             console.log('🎉 Redirecting to confirmation...');
-            flushSync(() => {
-              setSuccessMessage('🎉 Redirecting to confirmation...');
-            });
 
             // Navigate to confirmation (FIXED: use /payment-confirmation not /confirmation)
             const confirmationUrl = new URLSearchParams({
