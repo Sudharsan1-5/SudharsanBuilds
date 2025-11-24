@@ -977,39 +977,59 @@ window.paypal.Buttons({
           height: 45,
           tagline: false    // Remove "The safer, easier way to pay" tagline
         },
-        // ✅ CRITICAL FIX: Validate BEFORE PayPal window opens (not after)
+        // ✅ PROFESSIONAL FIX: Validate like Razorpay - show red borders, no alerts!
         onClick: (data: any, actions: any) => {
           // Get current form values from DOM (not React state - avoid stale closures)
           const nameInput = document.getElementById('modal-name') as HTMLInputElement;
           const emailInput = document.getElementById('modal-email') as HTMLInputElement;
+          const phoneInput = document.querySelector('input[type="tel"]') as HTMLInputElement;
           const detailsInput = document.getElementById('modal-details') as HTMLTextAreaElement;
 
           const currentName = nameInput?.value?.trim() || '';
           const currentEmail = emailInput?.value?.trim() || '';
+          const currentPhone = phoneInput?.value || '';
           const currentDetails = detailsInput?.value?.trim() || '';
 
-          // Validate required fields
-          if (!currentName || !currentEmail || !currentDetails) {
-            // Show clear, styled error message
-            const missingFields = [];
-            if (!currentName) missingFields.push('Name');
-            if (!currentEmail) missingFields.push('Email');
-            if (!currentDetails) missingFields.push('Project Details');
+          // Build validation errors object (same as Razorpay version)
+          const errors: typeof validationErrors = {};
 
-            alert(`❌ Please complete the following required fields:\n\n${missingFields.join('\n')}\n\nThen click PayPal again to proceed.`);
+          if (!currentName) {
+            errors.name = 'Name is required';
+          }
+
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!currentEmail) {
+            errors.email = 'Email is required';
+          } else if (!emailRegex.test(currentEmail)) {
+            errors.email = 'Please enter a valid email address';
+          }
+
+          // Phone validation (optional but must be valid if provided)
+          const phoneDigitsOnly = currentPhone?.replace(/\D/g, '') || '';
+          if (currentPhone && phoneDigitsOnly.length >= 6 && !validatePhone(currentPhone)) {
+            errors.phone = 'Please enter a valid phone number (8-15 digits, no leading zero)';
+          }
+
+          if (!currentDetails) {
+            errors.projectDetails = 'Project details are required';
+          }
+
+          // If there are errors, show red borders (like Razorpay) and block PayPal
+          if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+
+            // Focus first error field
+            const firstErrorField = Object.keys(errors)[0];
+            const errorElement = document.getElementById(`modal-${firstErrorField === 'projectDetails' ? 'details' : firstErrorField}`);
+            errorElement?.focus();
+            errorElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             // Return rejected promise to PREVENT PayPal window from opening
             return actions.reject();
           }
 
-          // Validate email format
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(currentEmail)) {
-            alert('❌ Please enter a valid email address.\n\nExample: john@example.com');
-            return actions.reject();
-          }
-
-          // All validation passed - allow PayPal to proceed
+          // Clear any previous errors and allow PayPal to proceed
+          setValidationErrors({});
           return actions.resolve();
         },
         createOrder: async () => {
