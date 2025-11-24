@@ -758,11 +758,8 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
       alert(errorMessage + '\n\nNeed help? Contact us at:\nsudharsanofficial0001@gmail.com');
       setIsPaymentLoading(false);
 
-      // Fallback to contact form
-      const contactSection = document.getElementById('contact');
-      if (contactSection) {
-        contactSection.scrollIntoView({ behavior: 'smooth' });
-      }
+      // ✅ CRITICAL FIX: Reopen modal so user can retry payment
+      setShowBookingModal(true);
     }
   };
 
@@ -961,6 +958,8 @@ window.paypal.Buttons({
       console.error('❌ PayPal payment error:', error);
       alert('❌ Payment system error. Please try again or contact us at:\nsudharsanofficial0001@gmail.com');
       setIsPaymentLoading(false);
+      // ✅ CRITICAL FIX: Reopen modal so user can retry payment
+      setShowBookingModal(true);
     }
   };
 
