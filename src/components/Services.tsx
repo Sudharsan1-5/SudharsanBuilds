@@ -1123,7 +1123,13 @@ window.paypal.Buttons({
         onApprove: async (data: any) => {
           console.log('✅ PayPal Payment Approved:', data.orderID);
 
-          // ✅ CRITICAL FIX: Show overlay IMMEDIATELY (like Razorpay), BEFORE any backend work
+          // ✅ CRITICAL FIX: Capture form values BEFORE closing modal (otherwise they're lost!)
+          const currentName = customerDetails.name;
+          const currentEmail = customerDetails.email;
+          const currentPhone = customerDetails.phone;
+          const currentDetails = customerDetails.projectDetails;
+
+          // Now close modal and show overlay
           setShowBookingModal(false);
           setShowSuccessOverlay(true);
           setSuccessMessage('✓ Payment Successful!');
@@ -1132,17 +1138,6 @@ window.paypal.Buttons({
           await new Promise(resolve => setTimeout(resolve, 800));
 
           try {
-            // Get current form values
-            const nameInput = document.getElementById('modal-name') as HTMLInputElement;
-            const emailInput = document.getElementById('modal-email') as HTMLInputElement;
-            const phoneInput = document.querySelector('input[type="tel"]') as HTMLInputElement;
-            const detailsInput = document.getElementById('modal-details') as HTMLTextAreaElement;
-
-            const currentName = nameInput?.value || '';
-            const currentEmail = emailInput?.value || '';
-            const currentPhone = phoneInput?.value || '';
-            const currentDetails = detailsInput?.value || '';
-
             // Update overlay for capture step
             setSuccessMessage('🔍 Verifying payment...');
             await new Promise(resolve => setTimeout(resolve, 600));
@@ -1199,7 +1194,7 @@ window.paypal.Buttons({
             await new Promise(resolve => setTimeout(resolve, 600));
             setSuccessMessage('🎉 Redirecting to confirmation...');
 
-            // Navigate to confirmation
+            // Navigate to confirmation (FIXED: use /payment-confirmation not /confirmation)
             const confirmationUrl = new URLSearchParams({
               invoiceId: invoiceResult.invoiceId || 'N/A',
               paymentId: data.orderID,
@@ -1215,7 +1210,7 @@ window.paypal.Buttons({
 
             // Small delay before redirect
             await new Promise(resolve => setTimeout(resolve, 600));
-            navigate(`/confirmation?${confirmationUrl.toString()}`);
+            navigate(`/payment-confirmation?${confirmationUrl.toString()}`);
             setShowSuccessOverlay(false);
           } catch (error) {
             console.error('❌ Payment error:', error);
@@ -1504,7 +1499,7 @@ window.paypal.Buttons({
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {services
-            .slice(0, showAll ? services.length : 2)
+            .slice(0, showAll ? services.length : 4)
             .map((service, index) => (
             <motion.div
               key={index}
@@ -1514,7 +1509,7 @@ window.paypal.Buttons({
               transition={{ delay: index * 0.05 }}
               className={`relative bg-white p-6 md:p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border-2 ${
                 service.popular ? 'border-cyan-500' : 'border-slate-100'
-              }`}
+              } ${!showAll && index >= 2 ? 'hidden md:block' : ''}`}
             >
               {/* Popular Badge */}
               {service.popular && (
