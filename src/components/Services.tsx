@@ -967,7 +967,7 @@ window.paypal.Buttons({
 
       const totalAmount = selectedService.totalAmount || selectedService.depositAmount;
 
-      // Render PayPal buttons with proper styling
+      // Render PayPal buttons with proper styling and validation
       window.paypal.Buttons({
         style: {
           layout: 'vertical',
@@ -977,9 +977,45 @@ window.paypal.Buttons({
           height: 45,
           tagline: false    // Remove "The safer, easier way to pay" tagline
         },
+        // ✅ CRITICAL FIX: Validate BEFORE PayPal window opens (not after)
+        onClick: (data: any, actions: any) => {
+          // Get current form values from DOM (not React state - avoid stale closures)
+          const nameInput = document.getElementById('modal-name') as HTMLInputElement;
+          const emailInput = document.getElementById('modal-email') as HTMLInputElement;
+          const detailsInput = document.getElementById('modal-details') as HTMLTextAreaElement;
+
+          const currentName = nameInput?.value?.trim() || '';
+          const currentEmail = emailInput?.value?.trim() || '';
+          const currentDetails = detailsInput?.value?.trim() || '';
+
+          // Validate required fields
+          if (!currentName || !currentEmail || !currentDetails) {
+            // Show clear, styled error message
+            const missingFields = [];
+            if (!currentName) missingFields.push('Name');
+            if (!currentEmail) missingFields.push('Email');
+            if (!currentDetails) missingFields.push('Project Details');
+
+            alert(`❌ Please complete the following required fields:\n\n${missingFields.join('\n')}\n\nThen click PayPal again to proceed.`);
+
+            // Return rejected promise to PREVENT PayPal window from opening
+            return actions.reject();
+          }
+
+          // Validate email format
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(currentEmail)) {
+            alert('❌ Please enter a valid email address.\n\nExample: john@example.com');
+            return actions.reject();
+          }
+
+          // All validation passed - allow PayPal to proceed
+          return actions.resolve();
+        },
         createOrder: async () => {
           try {
-            // ✅ FIX: Validate fields using current DOM values (not stale state)
+            // ✅ At this point, validation already passed (onClick approved)
+            // Get current form values
             const nameInput = document.getElementById('modal-name') as HTMLInputElement;
             const emailInput = document.getElementById('modal-email') as HTMLInputElement;
             const detailsInput = document.getElementById('modal-details') as HTMLTextAreaElement;
@@ -987,18 +1023,6 @@ window.paypal.Buttons({
             const currentName = nameInput?.value || '';
             const currentEmail = emailInput?.value || '';
             const currentDetails = detailsInput?.value || '';
-
-            if (!currentName.trim() || !currentEmail.trim() || !currentDetails.trim()) {
-              alert('❌ Please fill in all required fields (Name, Email, and Project Details) before proceeding with payment.');
-              throw new Error('Please fill in all required fields');
-            }
-
-            // Validate email format
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(currentEmail)) {
-              alert('❌ Please enter a valid email address.');
-              throw new Error('Invalid email format');
-            }
 
             const createOrderUrl = `${env.SUPABASE_URL}/functions/v1/create-paypal-order`;
             const csrfToken = sessionStorage.getItem('csrf_token');
@@ -1167,22 +1191,6 @@ window.paypal.Buttons({
       }).render('#paypal-button-container-modal');
     }
   }, [showBookingModal, payment.gateway, paypalLoaded, selectedService, navigate, currency]); // ✅ Removed showPayPalButtons - buttons always render
-
-  // ✅ Helper: Check if form is valid (for PayPal button state)
-  const isFormValid = () => {
-    if (!customerDetails.name.trim()) return false;
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!customerDetails.email.trim() || !emailRegex.test(customerDetails.email)) return false;
-
-    // Phone validation (optional but must be valid if provided)
-    const phoneDigitsOnly = customerDetails.phone?.replace(/\D/g, '') || '';
-    if (customerDetails.phone && phoneDigitsOnly.length >= 6 && !validatePhone(customerDetails.phone)) return false;
-
-    if (!customerDetails.projectDetails.trim()) return false;
-
-    return true;
-  };
 
   // ✅ Main Payment Handler - Routes to correct payment gateway
   const handlePaymentProceed = async () => {
@@ -1865,27 +1873,15 @@ window.paypal.Buttons({
                       </button>
                     </div>
                   ) : (
-                    // ✅ INSTANT TRUST: Global - Show PayPal buttons immediately with overlay when form invalid
+                    // ✅ INSTANT TRUST: Global - Show PayPal buttons immediately (validation in onClick)
                     <div className="space-y-3">
-                      {/* PayPal Button Container with conditional overlay */}
-                      <div className="relative">
-                        <div id="paypal-button-container-modal" className="min-h-[45px]"></div>
+                      {/* PayPal Button Container - onClick validates before opening popup */}
+                      <div id="paypal-button-container-modal" className="min-h-[45px]"></div>
 
-                        {/* Overlay when form is invalid - prevents clicks and shows message */}
-                        {!isFormValid() && (
-                          <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-lg flex items-center justify-center cursor-not-allowed">
-                            <div className="text-center px-4 py-3">
-                              <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold mb-1">
-                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                                </svg>
-                                <span className="text-sm">Complete the form above</span>
-                              </div>
-                              <p className="text-xs text-slate-600">Fill in all required fields to enable PayPal checkout</p>
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      {/* Helpful hint below button */}
+                      <p className="text-xs text-center text-slate-500">
+                        💡 Complete the form above, then click PayPal to proceed
+                      </p>
 
                       <button
                         onClick={() => setShowBookingModal(false)}
