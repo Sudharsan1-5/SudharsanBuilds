@@ -1,6 +1,8 @@
 import { Star, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { fetchPublishedTestimonials, fetchFeaturedTestimonials, type Testimonial } from '../utils/testimonialsApi';
 
 interface TestimonialsProps {
   limit?: number | null;
@@ -8,7 +10,11 @@ interface TestimonialsProps {
 }
 
 export default function Testimonials({ limit = null, showViewAll = false }: TestimonialsProps) {
-  const testimonials = [
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Hardcoded fallback testimonials (same data structure as database)
+  const fallbackTestimonials = [
     {
       name: 'Priya Sharma',
       role: 'Freelance Consultant',
@@ -59,6 +65,52 @@ export default function Testimonials({ limit = null, showViewAll = false }: Test
     }
   ];
 
+  // Fetch testimonials from database on mount
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      try {
+        let data: Testimonial[];
+
+        // If limit is specified (homepage), fetch featured testimonials
+        // Otherwise fetch all published testimonials
+        if (limit !== null && limit > 0) {
+          data = await fetchFeaturedTestimonials(limit);
+        } else {
+          data = await fetchPublishedTestimonials();
+        }
+
+        if (data && data.length > 0) {
+          setTestimonials(data);
+        } else {
+          // Fallback to hardcoded testimonials
+          setTestimonials(fallbackTestimonials as any);
+        }
+      } catch (error) {
+        console.error('Error loading testimonials from database, using fallback data:', error);
+        setTestimonials(fallbackTestimonials as any);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadTestimonials();
+  }, [limit]);
+
+  if (loading) {
+    return (
+      <section id="testimonials" className="py-20 md:py-28 bg-slate-900 border-t-4 border-cyan-500/30">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-slate-400">Loading testimonials...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="testimonials" className="py-20 md:py-28 bg-slate-900 border-t-4 border-cyan-500/30">
       <div className="container mx-auto px-4 md:px-6">
@@ -67,31 +119,55 @@ export default function Testimonials({ limit = null, showViewAll = false }: Test
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 max-w-5xl mx-auto mb-12">
-          {(limit ? testimonials.slice(0, limit) : testimonials).map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-slate-800 p-5 md:p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-700"
-            >
-              <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
-                <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg md:text-xl shadow-lg flex-shrink-0">
-                  {testimonial.avatar}
+          {(limit ? testimonials.slice(0, limit) : testimonials).map((testimonial, index) => {
+            // Generate initials from name if no avatar_url
+            const getInitials = (name: string) => {
+              const parts = name.split(' ');
+              return parts.length > 1
+                ? `${parts[0][0]}${parts[parts.length - 1][0]}`
+                : name.substring(0, 2);
+            };
+
+            return (
+              <motion.div
+                key={'id' in testimonial ? testimonial.id : index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-slate-800 p-5 md:p-8 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 border border-slate-700"
+              >
+                <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6">
+                  {('avatar_url' in testimonial && testimonial.avatar_url) ? (
+                    <img
+                      src={testimonial.avatar_url}
+                      alt={testimonial.name}
+                      className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover shadow-lg flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg md:text-xl shadow-lg flex-shrink-0">
+                      {('avatar' in testimonial) ? testimonial.avatar : getInitials(testimonial.name)}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <h4 className="text-lg md:text-xl font-bold text-white truncate">
+                      {testimonial.name}
+                    </h4>
+                    <p className="text-cyan-400 text-xs md:text-sm truncate">
+                      {testimonial.role}
+                    </p>
+                    {('location' in testimonial && testimonial.location) && (
+                      <p className="text-slate-400 text-xs truncate">
+                        📍 {testimonial.location}
+                      </p>
+                    )}
+                    {('company' in testimonial && testimonial.company) && (
+                      <p className="text-slate-500 text-xs truncate">
+                        🏢 {testimonial.company}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <h4 className="text-lg md:text-xl font-bold text-white truncate">
-                    {testimonial.name}
-                  </h4>
-                  <p className="text-cyan-400 text-xs md:text-sm truncate">
-                    {testimonial.role}
-                  </p>
-                  <p className="text-slate-400 text-xs truncate">
-                    📍 {testimonial.location}
-                  </p>
-                </div>
-              </div>
 
               <div className="flex gap-1 mb-3 md:mb-4">
                 {[...Array(testimonial.rating)].map((_, i) => (
@@ -103,7 +179,8 @@ export default function Testimonials({ limit = null, showViewAll = false }: Test
                 "{testimonial.text}"
               </p>
             </motion.div>
-          ))}
+          );
+          })}
         </div>
 
         {/* View All Button - Contrasting Color */}
