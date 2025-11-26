@@ -29,6 +29,7 @@ const AdminBlog = lazy(() => import('./pages/admin/AdminBlog'));
 const AdminSettings = lazy(() => import('./pages/admin/AdminSettings'));
 const AdminServices = lazy(() => import('./pages/admin/AdminServices'));
 const AdminHero = lazy(() => import('./pages/admin/AdminHero'));
+const AdminEmailAutomation = lazy(() => import('./pages/admin/AdminEmailAutomation'));
 
 // ✅ FIX: Lazy load global widgets (available on all pages)
 const AIChatbot = lazy(() => import('./components/AIChatbot'));
@@ -144,6 +145,7 @@ function App() {
                           <Route path="/blog" element={<AdminBlog />} />
                           <Route path="/services" element={<AdminServices />} />
                           <Route path="/hero" element={<AdminHero />} />
+                          <Route path="/email-automation" element={<AdminEmailAutomation />} />
                           <Route path="/settings" element={<AdminSettings />} />
                           <Route path="*" element={<div className="text-white text-center py-12">Coming soon...</div>} />
                         </Routes>

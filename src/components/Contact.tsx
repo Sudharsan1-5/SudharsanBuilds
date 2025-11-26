@@ -10,6 +10,7 @@ import { supabase } from '../services/supabaseClient'; // ✅ FIX: Use singleton
 import { getActiveRegion } from '../config/regions'; // ✅ ADDED: For region-based phone defaults
 import { env } from '../utils/env'; // ✅ P1 FIX: Import env for Formspree ID
 import { trackFormEvent, startFormSession, completeFormSession } from '../utils/formAnalytics'; // ✅ ANALYTICS: Form tracking
+import { triggerWelcomeSequence } from '../utils/emailAutomationApi'; // ✅ EMAIL AUTOMATION: Auto-trigger welcome emails
 
 interface FormErrors {
   name?: string;
@@ -143,8 +144,9 @@ export default function Contact() {
 
     // ✅ FIX: Save to Supabase and check for success
     let dataSaved = false;
+    let inquiryId: string | null = null;
     if (supabase) {
-      const { error: supabaseError } = await supabase
+      const { data: insertedData, error: supabaseError } = await supabase
         .from('inquiries')
         .insert([
           {
@@ -157,7 +159,9 @@ export default function Contact() {
             message: sanitizedData.message,
             created_at: new Date().toISOString()
           }
-        ]);
+        ])
+        .select('id')
+        .single();
 
       if (supabaseError) {
         console.error("❌ Supabase error:", supabaseError);
@@ -165,6 +169,22 @@ export default function Contact() {
       } else {
         console.log("✅ Inquiry saved to database successfully");
         dataSaved = true;
+        inquiryId = insertedData?.id || null;
+
+        // ✅ EMAIL AUTOMATION: Trigger welcome email sequence
+        if (inquiryId) {
+          try {
+            await triggerWelcomeSequence(
+              sanitizedData.name,
+              sanitizedData.email,
+              inquiryId
+            );
+            console.log("✅ Welcome email sequence triggered");
+          } catch (automationError) {
+            console.error("❌ Email automation error:", automationError);
+            // Don't fail the form submission if email automation fails
+          }
+        }
       }
     } else {
       console.error("❌ Supabase not configured");
