@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mail, Send, Github, Linkedin, Twitter, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
 import PhoneInput from 'react-phone-number-input';
@@ -9,6 +9,7 @@ import { validatePhone } from '../utils/validation'; // ✅ FIX: Use shared vali
 import { supabase } from '../services/supabaseClient'; // ✅ FIX: Use singleton Supabase client
 import { getActiveRegion } from '../config/regions'; // ✅ ADDED: For region-based phone defaults
 import { env } from '../utils/env'; // ✅ P1 FIX: Import env for Formspree ID
+import { trackFormEvent, startFormSession, completeFormSession } from '../utils/formAnalytics'; // ✅ ANALYTICS: Form tracking
 
 interface FormErrors {
   name?: string;
@@ -36,6 +37,13 @@ export default function Contact() {
   });
   const [status, setStatus] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  const formStarted = useRef(false); // ✅ ANALYTICS: Track if user started filling form
+
+  // ✅ ANALYTICS: Track form view on mount
+  useEffect(() => {
+    trackFormEvent('contact', 'view');
+    startFormSession('contact');
+  }, []);
 
   // ✅ LAZY LOAD FIX: Removed initEmailJS() call - not needed as Contact form only saves to Supabase, doesn't send emails
 
@@ -98,15 +106,27 @@ export default function Contact() {
     }
 
     setErrors(newErrors);
+
+    // ✅ ANALYTICS: Track validation errors
+    if (Object.keys(newErrors).length > 0) {
+      Object.entries(newErrors).forEach(([field, message]) => {
+        trackFormEvent('contact', 'error', { fieldName: field, errorMessage: message });
+      });
+    }
+
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
+  // ✅ ANALYTICS: Track form submission attempt
+  trackFormEvent('contact', 'submit');
+
   // Honeypot check (bot protection)
   if (formData.honeypot) {
     console.warn("Honeypot field filled - likely a bot");
+    trackFormEvent('contact', 'abandon', { metadata: { reason: 'honeypot_triggered' } });
     return;
   }
 
@@ -189,6 +209,9 @@ export default function Contact() {
     // Note: Email notifications are sent via Formspree
     if (dataSaved && emailSent) {
       setStatus("success");
+      // ✅ ANALYTICS: Track successful conversion
+      trackFormEvent('contact', 'success');
+      completeFormSession('contact', true);
       setFormData({
         name: '',
         email: '',
@@ -204,6 +227,9 @@ export default function Contact() {
       // Database saved but email failed - still show success
       console.warn("⚠️ Data saved but email sending failed");
       setStatus("success");
+      // ✅ ANALYTICS: Track successful conversion (even if email failed)
+      trackFormEvent('contact', 'success');
+      completeFormSession('contact', true);
       setFormData({
         name: '',
         email: '',
@@ -217,15 +243,33 @@ export default function Contact() {
       setErrors({});
     } else {
       setStatus("error");
+      // ✅ ANALYTICS: Track failure
+      trackFormEvent('contact', 'error', { errorMessage: 'Form submission failed' });
+      completeFormSession('contact', false);
     }
   } catch (error) {
     console.error("❌ Form submission error:", error);
     setStatus("error");
+    // ✅ ANALYTICS: Track exception
+    trackFormEvent('contact', 'error', { errorMessage: 'Exception during submission' });
+    completeFormSession('contact', false);
   }
 };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    // ✅ ANALYTICS: Track when user first starts filling form
+    if (!formStarted.current && value.trim()) {
+      formStarted.current = true;
+      trackFormEvent('contact', 'start');
+    }
+
+    // ✅ ANALYTICS: Track field changes
+    if (value.trim()) {
+      trackFormEvent('contact', 'field_change', { fieldName: name });
+    }
+
     setFormData(prev => ({
       ...prev,
       [name]: value
