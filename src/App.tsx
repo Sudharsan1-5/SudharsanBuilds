@@ -36,6 +36,7 @@ const AdminHero = lazy(() => import('./pages/admin/AdminHero'));
 const AdminEmailAutomation = lazy(() => import('./pages/admin/AdminEmailAutomation'));
 const AdminAdvancedAnalytics = lazy(() => import('./pages/admin/AdminAdvancedAnalytics'));
 const AdminRemoteControl = lazy(() => import('./pages/admin/AdminRemoteControl'));
+const AdminMediaLibrary = lazy(() => import('./pages/admin/AdminMediaLibrary'));
 
 // ✅ FIX: Lazy load global widgets (available on all pages)
 const AIChatbot = lazy(() => import('./components/AIChatbot'));
@@ -195,6 +196,7 @@ function App() {
                           <Route path="/analytics" element={<AdminAnalytics />} />
                           <Route path="/advanced-analytics" element={<AdminAdvancedAnalytics />} />
                           <Route path="/remote-control" element={<AdminRemoteControl />} />
+                          <Route path="/media" element={<AdminMediaLibrary />} />
                           <Route path="/blog" element={<AdminBlog />} />
                           <Route path="/services" element={<AdminServices />} />
                           <Route path="/hero" element={<AdminHero />} />
