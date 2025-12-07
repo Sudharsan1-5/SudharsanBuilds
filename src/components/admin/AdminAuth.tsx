@@ -3,6 +3,7 @@ import { supabase } from '../../services/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
+import ErrorBoundary from '../ErrorBoundary';
 
 interface AdminAuthProps {
   children: React.ReactNode;
@@ -172,6 +173,10 @@ export default function AdminAuth({ children }: AdminAuthProps) {
     );
   }
 
-  // User is authenticated, render admin panel
-  return <>{children}</>;
+  // User is authenticated, render admin panel with error boundary
+  return (
+    <ErrorBoundary>
+      {children}
+    </ErrorBoundary>
+  );
 }
