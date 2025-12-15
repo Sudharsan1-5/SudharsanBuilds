@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
+import { supabase } from '../services/supabaseClient'; 
 import { Send, X, Minimize2, Maximize2, Sparkles, Copy, RotateCw, ThumbsUp, ThumbsDown, Check, Mic, MicOff, Volume2, VolumeX, Download, Search, Trash2, Moon, Sun, Zap, MessageSquare, BookOpen, DollarSign, Clock, Globe, Building2, ShoppingCart, Code2, User, Briefcase, Rocket, Layers, CheckCircle2, ExternalLink, FolderOpen, Lightbulb, Navigation } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
@@ -611,96 +612,90 @@ export default function AIChatbot({ isOpen, onClose }: AIChatbotProps) {
   const regionConfig = getActiveRegion();
   const { currency, pricing, payment } = regionConfig;
 
-  // ✅ Services Data: Generated dynamically based on region config
-  const SERVICES_DATA = useMemo<Service[]>(() => [
-    {
-      icon: <Globe className="w-6 h-6" />,
-      name: 'Landing Page',
-      price: formatCurrency(pricing.landingPage.total, regionConfig),
-      totalAmount: pricing.landingPage.total,
-      description: '1-2 page website, modern design, mobile responsive',
-      features: ['Responsive Design', 'Contact Form', 'Google Analytics', 'SSL Certificate', 'Fast Loading', 'Basic SEO'],
-      timeline: pricing.landingPage.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.landingPage.deposit, regionConfig)} Deposit`,
-      depositAmount: pricing.landingPage.deposit,
-    },
-    {
-      icon: <User className="w-6 h-6" />,
-      name: 'Portfolio Website',
-      price: formatCurrency(pricing.portfolio.total, regionConfig),
-      totalAmount: pricing.portfolio.total,
-      description: 'Professional portfolio for freelancers, designers & developers',
-      features: ['Project Gallery', 'About & Skills', 'Resume Download', 'Contact Form', 'Testimonials', 'Mobile Responsive'],
-      timeline: pricing.portfolio.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.portfolio.deposit, regionConfig)} Deposit`,
-      depositAmount: pricing.portfolio.deposit,
-    },
-    {
-      icon: <Building2 className="w-6 h-6" />,
-      name: 'Business Website',
-      price: formatCurrency(pricing.business.total, regionConfig),
-      totalAmount: pricing.business.total,
-      description: '5-10 pages, professional design, CMS integration',
-      features: ['5-10 Pages', 'CMS Integration', 'Blog Section', 'Advanced Analytics', 'SEO Optimization', 'Contact Forms'],
-      timeline: pricing.business.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.business.deposit, regionConfig)} Deposit`,
-      depositAmount: pricing.business.deposit,
-    },
-    {
-      icon: <Briefcase className="w-6 h-6" />,
-      name: 'Personal Brand Website',
-      price: formatCurrency(pricing.personalBrand.total, regionConfig),
-      totalAmount: pricing.personalBrand.total,
-      description: 'Build your personal brand for coaches & consultants',
-      features: ['About & Services', 'Blog/Articles', 'Email Newsletter', 'Social Media Integration', 'Booking/Calendar', 'SEO & Analytics'],
-      timeline: pricing.personalBrand.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.personalBrand.deposit, regionConfig)} Deposit`,
-      depositAmount: pricing.personalBrand.deposit,
-    },
-    {
-      icon: <ShoppingCart className="w-6 h-6" />,
-      name: 'E-Commerce Store',
-      price: formatCurrency(pricing.ecommerce.total, regionConfig),
-      totalAmount: pricing.ecommerce.total,
-      description: 'Complete online store with payment gateway & admin panel',
-      features: ['Product Catalog', 'Shopping Cart', `${payment.gateway === 'razorpay' ? 'Razorpay' : 'PayPal'} Integration`, 'Inventory Management', 'Order Tracking', 'Admin Dashboard'],
-      timeline: pricing.ecommerce.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.ecommerce.deposit, regionConfig)} Deposit`,
-      depositAmount: pricing.ecommerce.deposit,
-    },
-    {
-      icon: <Rocket className="w-6 h-6" />,
-      name: 'SaaS Product',
-      price: `${formatCurrency(pricing.saas.total, regionConfig)}+`,
-      totalAmount: pricing.saas.total,
-      description: 'Full-featured SaaS platform with subscriptions',
-      features: ['User Authentication', 'Subscription Billing', 'Admin & User Dashboards', 'API Integration', 'Database Design', 'Scalable Architecture'],
-      timeline: pricing.saas.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.saas.deposit, regionConfig)} Deposit`,
-      depositAmount: pricing.saas.deposit,
-    },
-    {
-      icon: <Layers className="w-6 h-6" />,
-      name: 'Web Application',
-      price: `${formatCurrency(pricing.webApp.total, regionConfig)}+`,
-      totalAmount: pricing.webApp.total,
-      description: 'Custom web applications with complex features',
-      features: ['Custom Requirements', 'Database & Backend', 'User Management', 'Real-time Features', 'Third-party Integrations', 'Responsive Design'],
-      timeline: pricing.webApp.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.webApp.deposit, regionConfig)} Deposit`,
-      depositAmount: pricing.webApp.deposit,
-    },
-    {
-      icon: <Code2 className="w-6 h-6" />,
-      name: 'Custom Development',
-      price: `${formatCurrency(pricing.hourly.rate, regionConfig)}/hour`,
-      description: 'Hourly-based custom projects & maintenance',
-      features: ['Custom Requirements', 'Full-stack Development', 'API Integration', 'Bug Fixes & Updates', 'Code Reviews', 'Ongoing Support'],
-      timeline: 'Flexible',
-      ctaText: 'Get Quote - Discuss Project',
-    },
-  ], [regionConfig, pricing, payment]);
+// ✅ Fetch services from database (NOT hardcoded)
+const [services, setServices] = useState<Service[]>([]);
+const [servicesLoading, setServicesLoading] = useState(true);
 
+useEffect(() => {
+  let subscription: any;
+
+  async function fetchServices() {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_published', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      const mappedServices = data.map((service: any) => ({
+        icon: getIconComponent(service.icon_name),
+        name: service.name,
+        price: formatCurrency(
+          regionConfig.region === 'india' ? service.price_inr : service.price_usd,
+          regionConfig
+        ),
+        totalAmount: regionConfig.region === 'india' ? service.price_inr : service.price_usd,
+        description: service.description,
+        features: service.features,
+        timeline: service.timeline,
+        ctaText: service.cta_text,
+        ctaAction: service.cta_action as 'book' | 'quote',
+        depositAmount: regionConfig.region === 'india' 
+          ? service.deposit_amount_inr 
+          : service.deposit_amount_usd,
+        popular: service.is_popular
+      }));
+
+      setServices(mappedServices);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setServicesLoading(false);
+    }
+  }
+
+  fetchServices();
+
+  // Real-time subscription
+  subscription = supabase
+    .channel('services_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'services'
+      },
+      () => {
+        console.log('🔄 Services updated');
+        fetchServices();
+      }
+    )
+    .subscribe();
+
+  return () => {
+    if (subscription) {
+      supabase.removeChannel(subscription);
+    }
+  };
+}, [regionConfig.region]);
+
+// Helper function for icons
+const getIconComponent = (iconName: string) => {
+  const icons: Record<string, React.ReactNode> = {
+    'Globe': <Globe className="w-6 h-6" />,
+    'User': <User className="w-6 h-6" />,
+    'Building2': <Building2 className="w-6 h-6" />,
+    'Briefcase': <Briefcase className="w-6 h-6" />,
+    'ShoppingCart': <ShoppingCart className="w-6 h-6" />,
+    'Rocket': <Rocket className="w-6 h-6" />,
+    'Layers': <Layers className="w-6 h-6" />,
+    'Code2': <Code2 className="w-6 h-6" />
+  };
+  return icons[iconName] || <Globe className="w-6 h-6" />;
+};
   // ✅ Phase 2: Persistent User ID
   const [userId] = useState<string>(getUserId());
 

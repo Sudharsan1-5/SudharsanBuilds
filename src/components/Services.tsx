@@ -1,3 +1,4 @@
+import { supabase } from '../services/supabaseClient'; // Add this import
 import { Globe, Building2, ShoppingCart, Code2, Clock, CheckCircle2, User, Briefcase, Rocket, Layers, X, ArrowRight, ChevronDown, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
@@ -55,7 +56,10 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     projectDetails: ''
   });
   // ✅ P1 FIX: Inline validation errors instead of alert()
+  const [services, setServices] = useState<Service[]>([]);
+  const [servicesLoading, setServicesLoading] = useState(true);
   const [validationErrors, setValidationErrors] = useState<{
+  
     name?: string;
     email?: string;
     phone?: string;
@@ -102,6 +106,78 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     window.location.href = newUrl;
   };
 
+    // Fetch services from database + Real-time subscription
+useEffect(() => {
+  let subscription: any;
+
+  async function fetchServices() {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_published', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      const mappedServices = data.map(service => ({
+        icon: getIconComponent(service.icon_name),
+        name: service.name,
+        price: formatCurrency(
+          regionConfig.region === 'india' ? service.price_inr : service.price_usd,
+          regionConfig
+        ),
+        priceSubtext: service.price_subtext || undefined,
+        totalAmount: regionConfig.region === 'india' ? service.price_inr : service.price_usd,
+        description: service.description,
+        features: service.features,
+        timeline: service.timeline,
+        ctaText: service.cta_text,
+        ctaAction: service.cta_action as 'book' | 'quote',
+        depositAmount: regionConfig.region === 'india' 
+          ? service.deposit_amount_inr 
+          : service.deposit_amount_usd,
+        popular: service.is_popular
+      }));
+
+      setServices(mappedServices);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setServicesLoading(false);
+    }
+  }
+
+  // Initial fetch
+  fetchServices();
+
+  // ✅ NEW: Subscribe to real-time changes
+  subscription = supabase
+    .channel('services_changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*', // Listen to INSERT, UPDATE, DELETE
+        schema: 'public',
+        table: 'services'
+      },
+      (payload) => {
+        console.log('🔄 Services updated in real-time:', payload);
+        // Re-fetch all services when any change happens
+        fetchServices();
+      }
+    )
+    .subscribe();
+
+  // Cleanup: Unsubscribe when component unmounts
+  return () => {
+    if (subscription) {
+      supabase.removeChannel(subscription);
+    }
+  };
+}, [regionConfig.region]);
+
+
   // ✅ LAZY LOAD: EmailJS now initializes only when actually sending emails (in handlePaymentProceed)
 
   // ✅ LAZY LOAD: Payment Gateway Script - loads Razorpay OR PayPal based on region
@@ -129,6 +205,50 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
         }
       };
     }
+
+    // Fetch services from database
+  useEffect(() => {
+  async function fetchServices() {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('is_published', true)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+
+      // Map database columns to component format
+      const mappedServices = data.map(service => ({
+        icon: getIconComponent(service.icon_name),
+        name: service.name,
+        price: formatCurrency(
+          regionConfig.region === 'india' ? service.price_inr : service.price_usd,
+          regionConfig
+        ),
+        priceSubtext: service.price_subtext || undefined,
+        totalAmount: regionConfig.region === 'india' ? service.price_inr : service.price_usd,
+        description: service.description,
+        features: service.features,
+        timeline: service.timeline,
+        ctaText: service.cta_text,
+        ctaAction: service.cta_action as 'book' | 'quote',
+        depositAmount: regionConfig.region === 'india' 
+          ? service.deposit_amount_inr 
+          : service.deposit_amount_usd,
+        popular: service.is_popular
+      }));
+
+      setServices(mappedServices);
+    } catch (error) {
+      console.error('Error fetching services:', error);
+    } finally {
+      setServicesLoading(false);
+    }
+  }
+
+  fetchServices();
+}, [regionConfig.region]); // Re-fetch when region changes
 
     // Load PayPal for Global region
     if (payment.gateway === 'paypal' && !paypalLoaded && !window.paypal) {
@@ -207,163 +327,21 @@ export default function Services({ showAll = false }: { showAll?: boolean }) {
     }
   }, [showBookingModal]);
 
-  const services: Service[] = [
-    {
-      icon: <Globe className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'Landing Page',
-      price: formatCurrency(pricing.landingPage.total, regionConfig),
-      totalAmount: pricing.landingPage.total,
-      description: '1-2 page website, modern design, mobile responsive, perfect for launching quickly',
-      features: [
-        'Responsive Design',
-        'Contact Form Integration',
-        'Google Analytics Setup',
-        'SSL Certificate',
-        'Fast Loading Speed',
-        'Basic SEO Optimization'
-      ],
-      timeline: pricing.landingPage.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.landingPage.deposit, regionConfig)} Deposit`,
-      ctaAction: 'book',
-      depositAmount: pricing.landingPage.deposit,
-    },
-    {
-      icon: <User className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'Portfolio Website',
-      price: formatCurrency(pricing.portfolio.total, regionConfig),
-      totalAmount: pricing.portfolio.total,
-      description: 'Professional portfolio for freelancers, designers, developers & creatives',
-      features: [
-        'Project Showcase Gallery',
-        'About & Skills Section',
-        'Resume Download',
-        'Contact Form',
-        'Testimonials Section',
-        'Mobile Responsive'
-      ],
-      timeline: pricing.portfolio.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.portfolio.deposit, regionConfig)} Deposit`,
-      ctaAction: 'book',
-      depositAmount: pricing.portfolio.deposit,
-    },
-    {
-      icon: <Building2 className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'Business Website',
-      price: formatCurrency(pricing.business.total, regionConfig),
-      totalAmount: pricing.business.total,
-      description: '5-10 pages, professional design, CMS integration, perfect for established businesses',
-      features: [
-        'Multi-page Layout (5-10 pages)',
-        'CMS Integration (Easy Updates)',
-        'Blog Section',
-        'Advanced Analytics',
-        'SEO Optimization',
-        'Contact Forms & Maps'
-      ],
-      timeline: pricing.business.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.business.deposit, regionConfig)} Deposit`,
-      ctaAction: 'book',
-      depositAmount: pricing.business.deposit,
-      popular: true,
-    },
-    {
-      icon: <Briefcase className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'Personal Brand Website',
-      price: formatCurrency(pricing.personalBrand.total, regionConfig),
-      totalAmount: pricing.personalBrand.total,
-      description: 'Build your personal brand with a professional website for coaches, consultants & professionals',
-      features: [
-        'About & Services Pages',
-        'Blog/Articles Section',
-        'Email Newsletter Integration',
-        'Social Media Integration',
-        'Booking/Calendar Integration',
-        'SEO & Analytics'
-      ],
-      timeline: pricing.personalBrand.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.personalBrand.deposit, regionConfig)} Deposit`,
-      ctaAction: 'book',
-      depositAmount: pricing.personalBrand.deposit,
-    },
-    {
-      icon: <ShoppingCart className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'E-Commerce Store',
-      price: formatCurrency(pricing.ecommerce.total, regionConfig),
-      totalAmount: pricing.ecommerce.total,
-      description: `Complete online store with payment gateway, inventory management & admin panel`,
-      features: [
-        'Product Catalog (Unlimited)',
-        'Shopping Cart',
-        `${payment.gateway === 'razorpay' ? 'Razorpay' : 'PayPal'} Integration`,
-        'Inventory Management',
-        'Order Tracking',
-        'Admin Dashboard'
-      ],
-      timeline: pricing.ecommerce.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.ecommerce.deposit, regionConfig)} Deposit`,
-      ctaAction: 'book',
-      depositAmount: pricing.ecommerce.deposit,
-    },
-    {
-      icon: <Rocket className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'SaaS Product',
-      price: `${formatCurrency(pricing.saas.total, regionConfig)}+`,
-      priceSubtext: 'Starting from',
-      totalAmount: pricing.saas.total,
-      description: 'Full-featured SaaS platform with user management, subscriptions & admin dashboard',
-      features: [
-        'User Authentication',
-        'Subscription Billing',
-        'Admin & User Dashboards',
-        'API Integration',
-        'Database Design',
-        'Scalable Architecture'
-      ],
-      timeline: pricing.saas.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.saas.deposit, regionConfig)} Deposit`,
-      ctaAction: 'book',
-      depositAmount: pricing.saas.deposit,
-    },
-    {
-      icon: <Layers className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'Web Application',
-      price: `${formatCurrency(pricing.webApp.total, regionConfig)}+`,
-      priceSubtext: 'Starting from',
-      totalAmount: pricing.webApp.total,
-      description: 'Custom web applications with complex features & functionality',
-      features: [
-        'Custom Requirements',
-        'Database & Backend',
-        'User Management',
-        'Real-time Features',
-        'Third-party Integrations',
-        'Responsive Design'
-      ],
-      timeline: pricing.webApp.timeline,
-      ctaText: `Book Now - Pay ${formatCurrency(pricing.webApp.deposit, regionConfig)} Deposit`,
-      ctaAction: 'book',
-      depositAmount: pricing.webApp.deposit,
-    },
-    {
-      icon: <Code2 className="w-8 h-8 md:w-10 md:h-10" />,
-      name: 'Custom Development',
-      price: `${formatCurrency(pricing.hourly.rate, regionConfig)}/hour`,
-      priceSubtext: 'Negotiable',
-      totalAmount: undefined, // Hourly rate - no fixed total
-      description: 'Hourly-based custom projects, API integrations, complex features & maintenance',
-      features: [
-        'Custom Requirements',
-        'Full-stack Development',
-        'API Integration',
-        'Bug Fixes & Updates',
-        'Code Reviews',
-        'Ongoing Support'
-      ],
-      timeline: 'Flexible',
-      ctaText: 'Get Quote - Discuss Project',
-      ctaAction: 'quote',
-    },
-  ];
+  // Helper function to map icon names to components
+  const getIconComponent = (iconName: string) => {
+  const icons: Record<string, React.ReactNode> = {
+    'Globe': <Globe className="w-8 h-8 md:w-10 md:h-10" />,
+    'User': <User className="w-8 h-8 md:w-10 md:h-10" />,
+    'Building2': <Building2 className="w-8 h-8 md:w-10 md:h-10" />,
+    'Briefcase': <Briefcase className="w-8 h-8 md:w-10 md:h-10" />,
+    'ShoppingCart': <ShoppingCart className="w-8 h-8 md:w-10 md:h-10" />,
+    'Rocket': <Rocket className="w-8 h-8 md:w-10 md:h-10" />,
+    'Layers': <Layers className="w-8 h-8 md:w-10 md:h-10" />,
+    'Code2': <Code2 className="w-8 h-8 md:w-10 md:h-10" />
+  };
+  return icons[iconName] || <Globe className="w-8 h-8 md:w-10 md:h-10" />;
+};
+
 
   const handleBooking = async (service: Service) => {
     if (service.ctaAction === 'quote' || !service.depositAmount) {
@@ -1537,7 +1515,13 @@ window.paypal.Buttons({
         </div>
 
         {/* Services Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        {servicesLoading ? (
+  <div className="text-center py-12">
+    <div className="inline-block w-12 h-12 border-4 border-cyan-200 border-t-cyan-600 rounded-full animate-spin"></div>
+    <p className="mt-4 text-slate-600">Loading services...</p>
+  </div>
+) : (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {services
             .slice(0, showAll ? services.length : 4)
             .map((service, index) => (
@@ -1639,6 +1623,7 @@ window.paypal.Buttons({
             </motion.div>
           ))}
         </div>
+)}
 
         {/* View All Services Button - Contrasting Color */}
         {!showAll && (

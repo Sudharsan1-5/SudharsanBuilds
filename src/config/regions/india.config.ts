@@ -40,26 +40,6 @@ export const indiaConfig: RegionConfig = {
       deposit: 1,
       timeline: '3-4 days',
     },
-    personalBrand: {
-      total: 25000,
-      deposit: 8000,
-      timeline: '3-7 days',
-    },
-    ecommerce: {
-      total: 50000,
-      deposit: 15000,
-      timeline: '1-2 weeks',
-    },
-    saas: {
-      total: 75000,
-      deposit: 25000,
-      timeline: '1-2 weeks',
-    },
-    webApp: {
-      total: 60000,
-      deposit: 20000,
-      timeline: '2-3 weeks',
-    },
     hourly: {
       rate: 500,
       unit: 'hour',

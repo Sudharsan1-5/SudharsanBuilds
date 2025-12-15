@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, X, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
-import { useRegion, formatCurrency } from '../utils/region';
+// ✅ Correct
+import { getActiveRegion, formatCurrency } from "../config/regions";
 import { env } from '../utils/env';
 
 // Payment gateway scripts
@@ -28,13 +29,18 @@ export default function CheckoutPage() {
   const location = useLocation();
   const selectedService = location.state as Service | null;
 
-  const { regionConfig, payment, currency } = useRegion();
+  // ✅ Correct
+  const regionConfig = getActiveRegion();
+  const { payment, currency } = regionConfig;
 
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
   const [paypalLoaded, setPaypalLoaded] = useState(false);
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [successMessage, setSuccessMessage] = useState('Payment Successful!');
+  
+  // NEW STATE: Tracks if the form fields are complete and valid
+  const [isFormValid, setIsFormValid] = useState(false); 
 
   const [customerDetails, setCustomerDetails] = useState({
     name: '',
@@ -50,8 +56,13 @@ export default function CheckoutPage() {
     projectDetails?: string;
   }>({});
 
-  // ❌ NO AUTO-FOCUS - User requested this specifically
-  // const firstInputRef = useRef<HTMLInputElement>(null);
+  // 🛠️ FIX #1: Create a ref for customer details to use in PayPal/Razorpay closures
+  const customerDetailsRef = useRef(customerDetails);
+  
+  // 🛠️ FIX #1: Keep the ref updated on every state change
+  useEffect(() => {
+      customerDetailsRef.current = customerDetails;
+  }, [customerDetails]);
 
   // Redirect if no service data
   useEffect(() => {
@@ -68,7 +79,65 @@ export default function CheckoutPage() {
     }
   }, []);
 
-  // Load Razorpay for India region
+  // Phone validation helper
+  const validatePhone = (phone: string): boolean => {
+    try {
+      return isValidPhoneNumber(phone);
+    } catch {
+      return false;
+    }
+  };
+
+  // NEW/MODIFIED: Unified Form Validation Logic
+  const validateForm = useCallback((focusOnError = false) => {
+    const errors: typeof validationErrors = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    let valid = true;
+
+    if (!customerDetails.name.trim()) {
+      errors.name = 'Name is required';
+      valid = false;
+    }
+
+    if (!customerDetails.email.trim()) {
+      errors.email = 'Email is required';
+      valid = false;
+    } else if (!emailRegex.test(customerDetails.email)) {
+      errors.email = 'Please enter a valid email address';
+      valid = false;
+    }
+
+    const phoneDigitsOnly = customerDetails.phone?.replace(/\D/g, '') || '';
+    if (customerDetails.phone && phoneDigitsOnly.length >= 6 && !validatePhone(customerDetails.phone)) {
+      errors.phone = 'Please enter a valid phone number';
+      valid = false;
+    }
+
+    if (!customerDetails.projectDetails.trim()) {
+      errors.projectDetails = 'Project details are required';
+      valid = false;
+    }
+    
+    setValidationErrors(errors);
+    setIsFormValid(valid);
+
+    if (focusOnError && !valid) {
+      const firstErrorField = Object.keys(errors)[0];
+      const errorElement = document.getElementById(`checkout-${firstErrorField === 'projectDetails' ? 'details' : firstErrorField}`);
+      errorElement?.focus();
+    }
+    
+    return valid;
+  }, [customerDetails]);
+
+
+  // Effect to re-validate form whenever customerDetails change
+  useEffect(() => {
+      validateForm(false);
+  }, [customerDetails, validateForm]);
+  
+  
+  // Load Razorpay for India region (Unchanged)
   useEffect(() => {
     if (payment.gateway === 'razorpay' && !razorpayLoaded && !window.Razorpay) {
       const script = document.createElement('script');
@@ -92,7 +161,7 @@ export default function CheckoutPage() {
     }
   }, [payment.gateway, razorpayLoaded]);
 
-  // Load PayPal for Global region
+  // Load PayPal for Global region (Unchanged)
   useEffect(() => {
     if (payment.gateway === 'paypal' && !paypalLoaded && !window.paypal) {
       const script = document.createElement('script');
@@ -116,37 +185,39 @@ export default function CheckoutPage() {
     }
   }, [payment.gateway, paypalLoaded]);
 
-  // Render PayPal buttons
+  // 🛠️ FIX #2: Render PayPal buttons only once with stable dependencies
   useEffect(() => {
+    // Only attempt to render PayPal if it's the right gateway, it's loaded, and we have a service
     if (payment.gateway !== 'paypal' || !paypalLoaded || !window.paypal || !selectedService) return;
 
     const paypalContainer = document.getElementById('paypal-button-container-page');
     if (!paypalContainer) return;
 
-    paypalContainer.innerHTML = '';
+    // CRITICAL: Stop re-rendering if buttons are already present
+    if (paypalContainer.hasChildNodes()) {
+        return; 
+    }
 
     window.paypal.Buttons({
+      // We rely on isFormValid state via the JSX conditional to enable the button container
       createOrder: (data: any, actions: any) => {
-        // Validate before creating order
-        const errors: typeof validationErrors = {};
-        if (!customerDetails.name.trim()) errors.name = 'Name is required';
-        if (!customerDetails.email.trim()) errors.email = 'Email is required';
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerDetails.email)) errors.email = 'Invalid email';
-        if (!customerDetails.projectDetails.trim()) errors.projectDetails = 'Project details required';
-
-        if (Object.keys(errors).length > 0) {
-          setValidationErrors(errors);
-          return Promise.reject('Validation failed');
+        // Use the Ref to access the LATEST form data without making it a dependency
+        const latestDetails = customerDetailsRef.current;
+        
+        // Final validation check before order creation
+        if (!validateForm(false)) { 
+            return Promise.reject('Validation failed');
         }
 
         return actions.order.create({
           purchase_units: [{
             amount: {
-              value: (selectedService.depositAmount / currency.exchangeRate).toFixed(2),
+              value: (selectedService.depositAmount / currency.exchangeRate).toFixed(2), 
               currency_code: currency.code
             },
             description: `Deposit for ${selectedService.name}`,
-            custom_id: `${customerDetails.name}|${customerDetails.email}|${customerDetails.phone}|${selectedService.name}`,
+            // Use the data from the REF
+            custom_id: `${latestDetails.name}|${latestDetails.email}|${latestDetails.phone}|${selectedService.name}`,
           }]
         });
       },
@@ -164,18 +235,10 @@ export default function CheckoutPage() {
         console.log('ℹ️ Payment cancelled');
       }
     }).render('#paypal-button-container-page');
-  }, [payment.gateway, paypalLoaded, selectedService, customerDetails, currency]);
+    // Dependencies are now stable, preventing re-render on every keystroke
+  }, [payment.gateway, paypalLoaded, selectedService, currency]);
 
-  // Phone validation
-  const validatePhone = (phone: string): boolean => {
-    try {
-      return isValidPhoneNumber(phone);
-    } catch {
-      return false;
-    }
-  };
-
-  // Razorpay error messages
+  // Razorpay error messages (Unchanged)
   const getRazorpayErrorMessage = (error: any): string => {
     const errorCode = error?.error?.code;
     const errorDescription = error?.error?.description;
@@ -187,18 +250,11 @@ export default function CheckoutPage() {
       case 'GATEWAY_ERROR':
         return '❌ Payment gateway error. Please try a different payment method.';
       case 'SERVER_ERROR':
-        return '❌ Server error occurred. Please try again in a moment.';
       case 'NETWORK_ERROR':
-        return '❌ Network connection issue. Please check your internet and try again.';
+        return '❌ Server error occurred. Please try again in a moment.';
       default:
-        if (errorReason?.includes('payment_failed')) {
-          return '❌ Payment failed. Please check your payment details and try again.';
-        }
-        if (errorReason?.includes('card_declined')) {
-          return '❌ Card declined. Please try a different card or payment method.';
-        }
-        if (errorReason?.includes('insufficient_funds')) {
-          return '❌ Insufficient funds. Please use a different payment method.';
+        if (errorReason?.includes('payment_failed') || errorReason?.includes('card_declined') || errorReason?.includes('insufficient_funds')) {
+          return `❌ Payment failed: ${errorReason.replace(/_/g, ' ')}. Please check details and try again.`;
         }
         if (errorDescription?.toLowerCase().includes('timeout')) {
           return '❌ Payment timeout. Please try again.';
@@ -207,7 +263,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // Razorpay payment processing
+  // Razorpay payment processing (Now uses ref for customer details)
   const processRazorpayPayment = async () => {
     if (!selectedService || !selectedService.depositAmount) return;
 
@@ -221,6 +277,9 @@ export default function CheckoutPage() {
       const totalAmount = selectedService.totalAmount || selectedService.depositAmount;
       const createOrderUrl = `${env.SUPABASE_URL}/functions/v1/create-payment-order`;
       const csrfToken = sessionStorage.getItem('csrf_token');
+
+      // 🛠️ FIX #3: Use ref for current data
+      const latestDetails = customerDetailsRef.current; 
 
       const response = await fetch(createOrderUrl, {
         method: 'POST',
@@ -238,9 +297,9 @@ export default function CheckoutPage() {
             service_price: selectedService.price,
             total_amount: totalAmount,
             deposit_amount: selectedService.depositAmount,
-            customer_name: customerDetails.name,
-            customer_email: customerDetails.email,
-            customer_phone: customerDetails.phone
+            customer_name: latestDetails.name, 
+            customer_email: latestDetails.email, 
+            customer_phone: latestDetails.phone 
           }
         })
       });
@@ -263,9 +322,9 @@ export default function CheckoutPage() {
           await showSuccessAndRedirect(`/payment-confirmation?status=success&gateway=razorpay&id=${razorpayResponse.razorpay_payment_id}&service=${encodeURIComponent(selectedService.name)}&amount=${selectedService.depositAmount}`);
         },
         prefill: {
-          name: customerDetails.name,
-          email: customerDetails.email,
-          contact: customerDetails.phone
+          name: latestDetails.name, 
+          email: latestDetails.email, 
+          contact: latestDetails.phone 
         },
         theme: {
           color: '#06b6d4'
@@ -292,7 +351,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // Success overlay and redirect
+  // Success overlay and redirect (Unchanged)
   const showSuccessAndRedirect = async (confirmationUrl: string) => {
     setShowSuccessOverlay(true);
     setSuccessMessage('✓ Payment Successful!');
@@ -310,45 +369,22 @@ export default function CheckoutPage() {
     navigate(confirmationUrl);
   };
 
-  // Main payment handler
+  // MODIFIED: Main payment handler (PayPal flow now just focuses and waits for the SDK button click)
   const handlePaymentProceed = async () => {
     if (!selectedService || !selectedService.depositAmount) return;
 
-    const errors: typeof validationErrors = {};
+    const valid = validateForm(true); // Validate and focus on error if necessary
 
-    if (!customerDetails.name.trim()) {
-      errors.name = 'Name is required';
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!customerDetails.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!emailRegex.test(customerDetails.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-
-    const phoneDigitsOnly = customerDetails.phone?.replace(/\D/g, '') || '';
-    if (customerDetails.phone && phoneDigitsOnly.length >= 6 && !validatePhone(customerDetails.phone)) {
-      errors.phone = 'Please enter a valid phone number (8-15 digits, no leading zero)';
-    }
-
-    if (!customerDetails.projectDetails.trim()) {
-      errors.projectDetails = 'Project details are required';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors);
-      const firstErrorField = Object.keys(errors)[0];
-      const errorElement = document.getElementById(`checkout-${firstErrorField === 'projectDetails' ? 'details' : firstErrorField}`);
-      errorElement?.focus();
+    if (!valid) {
+      // Validation failed, errors are already set by validateForm
       return;
     }
 
-    setValidationErrors({});
-
-    // For PayPal, validation happens in createOrder callback
+    // For PayPal, validation is complete, but we wait for the SDK button click.
     if (payment.gateway === 'paypal') {
-      return;
+        // Scroll to the PayPal button container to make it visible
+        document.getElementById('paypal-button-container-page')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
     }
 
     // Razorpay flow
@@ -374,9 +410,19 @@ export default function CheckoutPage() {
     await processRazorpayPayment();
   };
 
+
   if (!selectedService) {
     return null;
   }
+  
+  // Helper to update customer details and clear errors on input change
+  const handleChange = (field: keyof typeof customerDetails, value: string) => {
+      setCustomerDetails(prev => ({ ...prev, [field]: value }));
+      if (validationErrors[field]) {
+          setValidationErrors(prev => ({ ...prev, [field]: undefined }));
+      }
+  };
+
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
@@ -416,12 +462,7 @@ export default function CheckoutPage() {
                 type="text"
                 id="checkout-name"
                 value={customerDetails.name}
-                onChange={(e) => {
-                  setCustomerDetails({ ...customerDetails, name: e.target.value });
-                  if (validationErrors.name) {
-                    setValidationErrors({ ...validationErrors, name: undefined });
-                  }
-                }}
+                onChange={(e) => handleChange('name', e.target.value)}
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
                   validationErrors.name
                     ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -446,12 +487,7 @@ export default function CheckoutPage() {
                 type="email"
                 id="checkout-email"
                 value={customerDetails.email}
-                onChange={(e) => {
-                  setCustomerDetails({ ...customerDetails, email: e.target.value });
-                  if (validationErrors.email) {
-                    setValidationErrors({ ...validationErrors, email: undefined });
-                  }
-                }}
+                onChange={(e) => handleChange('email', e.target.value)}
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
                   validationErrors.email
                     ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -476,13 +512,9 @@ export default function CheckoutPage() {
                 international
                 defaultCountry={regionConfig.region === 'india' ? 'IN' : 'US'}
                 value={customerDetails.phone}
-                onChange={(value) => {
-                  setCustomerDetails({ ...customerDetails, phone: value || '' });
-                  if (validationErrors.phone) {
-                    setValidationErrors({ ...validationErrors, phone: undefined });
-                  }
-                }}
+                onChange={(value) => handleChange('phone', value || '')}
                 numberInputProps={{
+                  id: 'checkout-phone',
                   className: `w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
                     validationErrors.phone
                       ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -505,12 +537,7 @@ export default function CheckoutPage() {
               <textarea
                 id="checkout-details"
                 value={customerDetails.projectDetails}
-                onChange={(e) => {
-                  setCustomerDetails({ ...customerDetails, projectDetails: e.target.value });
-                  if (validationErrors.projectDetails) {
-                    setValidationErrors({ ...validationErrors, projectDetails: undefined });
-                  }
-                }}
+                onChange={(e) => handleChange('projectDetails', e.target.value)}
                 rows={4}
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none transition-colors ${
                   validationErrors.projectDetails
@@ -555,6 +582,7 @@ export default function CheckoutPage() {
             {/* Payment Actions */}
             <div className="pt-4 border-t border-slate-200">
               {payment.gateway === 'razorpay' ? (
+                // Razorpay flow: uses a single button to validate and proceed
                 <div className="flex gap-3">
                   <button
                     onClick={() => navigate('/services')}
@@ -571,11 +599,31 @@ export default function CheckoutPage() {
                   </button>
                 </div>
               ) : (
+                // PayPal flow: uses a custom button to validate, then reveals the PayPal SDK button
                 <div className="space-y-3">
-                  <div id="paypal-button-container-page" className="min-h-[45px]"></div>
-                  <p className="text-xs text-center text-slate-500">
-                    💡 Complete the form above, then click PayPal to proceed
-                  </p>
+                  <button
+                    onClick={handlePaymentProceed}
+                    disabled={!isFormValid || isPaymentLoading} // Disabled until form is valid
+                    className={`w-full px-6 py-3 text-white rounded-lg font-semibold transition-all ${
+                        isFormValid 
+                            ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:shadow-lg hover:shadow-cyan-500/50' 
+                            : 'bg-slate-400 cursor-not-allowed'
+                    }`}
+                  >
+                    {isFormValid ? 'Proceed to PayPal' : 'Fill Form to Enable Payment'}
+                  </button>
+                    
+                  {/* PayPal button container - ONLY renders SDK buttons if isFormValid is true */}
+                  {isFormValid && (
+                    <div id="paypal-button-container-page" className="min-h-[45px]"></div>
+                  )}
+
+                  {!isFormValid && (
+                    <p className="text-xs text-center text-red-500">
+                        Please complete all required fields to proceed to PayPal.
+                    </p>
+                  )}
+                    
                   <button
                     onClick={() => navigate('/services')}
                     className="w-full px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-lg font-semibold hover:bg-slate-50 transition-colors"
@@ -589,7 +637,7 @@ export default function CheckoutPage() {
         </div>
       </div>
 
-      {/* Success Overlay */}
+      {/* Success Overlay (Unchanged) */}
       <AnimatePresence>
         {showSuccessOverlay && (
           <motion.div

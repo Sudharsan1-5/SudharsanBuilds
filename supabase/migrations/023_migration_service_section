@@ -1,0 +1,308 @@
+-- =====================================================
+-- MIGRATE SERVICES TO DATABASE
+-- Supports dual-region pricing (India INR + Global USD)
+-- =====================================================
+
+-- Insert Landing Page
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440001'::uuid,
+  'Landing Page',
+  'landing-page',
+  'Globe',
+  15000,
+  300,
+  NULL,
+  '1-2 page website, modern design, mobile responsive, perfect for launching quickly',
+  ARRAY[
+    'Responsive Design',
+    'Contact Form Integration',
+    'Google Analytics Setup',
+    'SSL Certificate',
+    'Fast Loading Speed',
+    'Basic SEO Optimization'
+  ],
+  '1-2 days',
+  'Book Now',
+  'book',
+  5000,
+  100,
+  false,
+  true,
+  1,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Insert Portfolio Website
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440002'::uuid,
+  'Portfolio Website',
+  'portfolio-website',
+  'User',
+  20000,
+  350,
+  NULL,
+  'Professional portfolio for freelancers, designers, developers & creatives',
+  ARRAY[
+    'Project Showcase Gallery',
+    'About & Skills Section',
+    'Resume Download',
+    'Contact Form',
+    'Testimonials Section',
+    'Mobile Responsive'
+  ],
+  '2-3 days',
+  'Book Now',
+  'book',
+  7000,
+  120,
+  false,
+  true,
+  2,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Insert Business Website
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440003'::uuid,
+  'Business Website',
+  'business-website',
+  'Building2',
+  30000,
+  500,
+  NULL,
+  '5-10 pages, professional design, CMS integration, perfect for established businesses',
+  ARRAY[
+    'Multi-page Layout (5-10 pages)',
+    'CMS Integration (Easy Updates)',
+    'Blog Section',
+    'Advanced Analytics',
+    'SEO Optimization',
+    'Contact Forms & Maps'
+  ],
+  '3-4 days',
+  'Book Now',
+  'book',
+  10000,
+  175,
+  true,
+  true,
+  3,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Insert Personal Brand Website
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440004'::uuid,
+  'Personal Brand Website',
+  'personal-brand-website',
+  'Briefcase',
+  25000,
+  400,
+  NULL,
+  'Build your personal brand with a professional website for coaches, consultants & professionals',
+  ARRAY[
+    'About & Services Pages',
+    'Blog/Articles Section',
+    'Email Newsletter Integration',
+    'Social Media Integration',
+    'Booking/Calendar Integration',
+    'SEO & Analytics'
+  ],
+  '3-7 days',
+  'Book Now',
+  'book',
+  8000,
+  135,
+  false,
+  true,
+  4,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Insert E-Commerce Store
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440005'::uuid,
+  'E-Commerce Store',
+  'ecommerce-store',
+  'ShoppingCart',
+  50000,
+  1000,
+  NULL,
+  'Complete online store with payment gateway, inventory management & admin panel',
+  ARRAY[
+    'Product Catalog (Unlimited)',
+    'Shopping Cart',
+    'Payment Gateway Integration',
+    'Inventory Management',
+    'Order Tracking',
+    'Admin Dashboard'
+  ],
+  '1-2 weeks',
+  'Book Now',
+  'book',
+  15000,
+  350,
+  false,
+  true,
+  5,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Insert SaaS Product
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440006'::uuid,
+  'SaaS Product',
+  'saas-product',
+  'Rocket',
+  75000,
+  1500,
+  'Starting from',
+  'Full-featured SaaS platform with user management, subscriptions & admin dashboard',
+  ARRAY[
+    'User Authentication',
+    'Subscription Billing',
+    'Admin & User Dashboards',
+    'API Integration',
+    'Database Design',
+    'Scalable Architecture'
+  ],
+  '1-2 weeks',
+  'Book Now',
+  'book',
+  25000,
+  500,
+  false,
+  true,
+  6,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Insert Web Application
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440007'::uuid,
+  'Web Application',
+  'web-application',
+  'Layers',
+  60000,
+  1200,
+  'Starting from',
+  'Custom web applications with complex features & functionality',
+  ARRAY[
+    'Custom Requirements',
+    'Database & Backend',
+    'User Management',
+    'Real-time Features',
+    'Third-party Integrations',
+    'Responsive Design'
+  ],
+  '2-3 weeks',
+  'Book Now',
+  'book',
+  20000,
+  400,
+  false,
+  true,
+  7,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Insert Custom Development (Hourly)
+INSERT INTO services (
+  id, name, slug, icon_name, 
+  price_inr, price_usd, price_subtext,
+  description, features, timeline,
+  cta_text, cta_action,
+  deposit_amount_inr, deposit_amount_usd,
+  is_popular, is_published, display_order,
+  created_at
+) VALUES (
+  '650e8400-e29b-41d4-a716-446655440008'::uuid,
+  'Custom Development',
+  'custom-development',
+  'Code2',
+  500,
+  10,
+  'per hour - Negotiable',
+  'Hourly-based custom projects, API integrations, complex features & maintenance',
+  ARRAY[
+    'Custom Requirements',
+    'Full-stack Development',
+    'API Integration',
+    'Bug Fixes & Updates',
+    'Code Reviews',
+    'Ongoing Support'
+  ],
+  'Flexible',
+  'Get Quote',
+  'quote',
+  NULL,
+  NULL,
+  false,
+  true,
+  8,
+  NOW()
+) ON CONFLICT (id) DO NOTHING;
+
+-- Log migration
+INSERT INTO activity_log (action_type, action_data, user_email)
+VALUES (
+  'data_migration',
+  '{"type": "services_migration", "description": "Migrated 8 services with dual-region pricing (INR + USD)"}'::jsonb,
+  'system'
+) ON CONFLICT DO NOTHING;
