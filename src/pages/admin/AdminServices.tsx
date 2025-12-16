@@ -452,6 +452,18 @@ export default function AdminServices() {
                 />
               </div>
 
+              {/* Deposit USD */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-300 mb-2">Deposit (USD)</label>
+                <input
+                  type="number"
+                  value={formData.deposit_amount_usd}
+                  onChange={e => setFormData({ ...formData, deposit_amount_usd: parseInt(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                  min="0"
+                />
+              </div>
+
               {/* Checkboxes */}
               <div className="md:col-span-2 space-y-3">
                 <label className="flex items-center gap-2 text-slate-300">

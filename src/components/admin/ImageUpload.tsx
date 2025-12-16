@@ -136,22 +136,11 @@ export default function ImageUpload({
     }
   };
 
-  const handleRemoveImage = async (index: number) => {
-    const imageUrl = images[index];
-
-    try {
-      // Only delete from storage if it's a Supabase URL
-      if (imageUrl.includes('supabase')) {
-        await deleteProjectImage(imageUrl);
-      }
-
-      const newImages = images.filter((_, i) => i !== index);
-      onChange(newImages);
-    } catch (error) {
-      console.error('Error deleting image:', error);
-      alert('Failed to delete image');
-    }
-  };
+const handleRemoveImage = async (index: number) => {
+  // Only update local state - don't delete from database yet
+  const newImages = images.filter((_, i) => i !== index);
+  onChange(newImages);
+};
 
   const handleReorder = (fromIndex: number, toIndex: number) => {
     const newImages = [...images];

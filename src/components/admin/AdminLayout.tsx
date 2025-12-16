@@ -51,6 +51,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { icon: Sliders, label: 'Remote Control', path: '/admin/remote-control' },
     { icon: Image, label: 'Media Library', path: '/admin/media' },
     { icon: CheckSquare, label: 'Production Checklist', path: '/admin/production-checklist' },
+    { icon: Settings, label: 'Footer Settings', path: '/admin/footer' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 

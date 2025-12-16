@@ -4,6 +4,7 @@ import Navigation from './components/Navigation';
 import RegionBanner from './components/RegionBanner';
 import SEOHead from './components/SEOHead';
 import ErrorBoundary from './components/ErrorBoundary';
+import AdminFooter from './pages/admin/AdminFooter';
 import { features } from './utils/env';
 import { autoTrackPerformance, setupGlobalErrorHandler } from './utils/notificationsAnalyticsApi';
 import { registerServiceWorker } from './utils/serviceWorkerRegistration';
@@ -206,6 +207,7 @@ function App() {
                           <Route path="/hero" element={<AdminHero />} />
                           <Route path="/email-automation" element={<AdminEmailAutomation />} />
                           <Route path="/settings" element={<AdminSettings />} />
+                          <Route path="/footer" element={<AdminFooter />} />
                           <Route path="*" element={<div className="text-white text-center py-12">Coming soon...</div>} />
                         </Routes>
                       </AdminLayout>

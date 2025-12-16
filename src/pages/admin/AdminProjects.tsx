@@ -60,18 +60,15 @@ export default function AdminProjects() {
   };
 
   const handleTogglePublished = async (id: string, currentStatus: boolean) => {
-    try {
-      await toggleProjectPublished(id, !currentStatus);
-      setProjects(
-        projects.map((p) =>
-          p.id === id ? { ...p, featured: !currentStatus } : p
-        )
-      );
-    } catch (error) {
-      console.error('Error toggling project status:', error);
-      alert('Failed to update project status');
-    }
-  };
+  try {
+    await toggleProjectPublished(id, !currentStatus);
+    // Reload all projects from database instead of just updating state
+    await loadProjects();
+  } catch (error) {
+    console.error('Error toggling project status:', error);
+    alert('Failed to update project status');
+  }
+};
 
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =

@@ -1,217 +1,216 @@
--- =====================================================
 -- MIGRATE BLOGS & FAQs TO DATABASE
 -- =====================================================
 
 -- =====================================================
 -- BLOGS MIGRATION
+-- Fixes Applied:
+-- 1. Table name changed from 'blog' to 'blog_posts'.
+-- 2. Column 'publish_date' changed to 'published_at'.
+-- 3. Column 'display_order' and its value are removed from ALL inserts.
+-- 4. Whitespace around column names has been standardized to fix 42601 syntax error.
 -- =====================================================
 
 -- Blog 1: How to Start an Online Business in Trichy
-INSERT INTO blog (
-  id, title, slug, excerpt, content, keywords,
-  read_time, publish_date, is_featured, is_published,
-  display_order, created_at
+INSERT INTO blog_posts (
+    id, title, slug, excerpt, content, keywords,
+    read_time, published_at, is_featured, is_published,
+    created_at
 ) VALUES (
-  '750e8400-e29b-41d4-a716-446655440001'::uuid,
-  'How to Start an Online Business in Trichy - Step by Step Guide',
-  'how-to-start-online-business-trichy',
-  'Complete guide for Trichy entrepreneurs looking to establish their online presence and grow their business digitally.',
-  E'Starting an online business in Trichy has never been more accessible. With the digital revolution reaching every corner of Tamil Nadu, local businesses now have unprecedented opportunities to expand their reach beyond traditional boundaries.\n\n**Step 1: Define Your Business Model**\nBefore diving into the digital world, clearly define what you\'re offering. Are you selling products, services, or both? Understanding your business model helps in choosing the right online platform and marketing strategy.\n\n**Step 2: Get Your Website Built**\nYour website is your digital storefront. For Trichy businesses, having a professionally designed website is crucial. Consider these options:\n• Landing Page (₹15,000) - Perfect for service providers\n• Business Website (₹30,000) - Ideal for established businesses\n• E-Commerce Store (₹50,000) - For product-based businesses\n\n**Step 3: Set Up Payment Integration**\nFor Trichy businesses, integrating Razorpay or PayPal makes accepting online payments seamless. Indian customers prefer UPI, cards, and net banking - ensure your payment gateway supports all these options.\n\n**Step 4: Optimize for Local SEO**\nMake sure customers in Trichy can find you! Include location-specific keywords like "web developer trichy," "Trichy business," and "Tiruchirappalli services" throughout your website.\n\n**Step 5: Leverage Social Media**\nCreate business profiles on Facebook and Instagram. These platforms are extremely popular in Trichy and help you connect with local customers directly.\n\n**Step 6: Start Marketing**\nUse Google My Business to appear in local searches. Run targeted Facebook ads for Trichy and surrounding areas. Collaborate with local influencers and businesses.\n\n**Why Work with a Local Web Developer?**\nPartnering with a local Trichy web developer means same timezone communication, understanding of local market needs, and the possibility of in-person meetings.\n\n**Get Started Today**\nReady to launch your online business in Trichy? Contact me for a free consultation and let\'s build your digital presence together.',
-  ARRAY['web developer trichy', 'online business trichy', 'website for business'],
-  '8 min read',
-  '2025-01-15',
-  true,
-  true,
-  1,
-  NOW()
+    '750e8400-e29b-41d4-a716-446655440001'::uuid,
+    'How to Start an Online Business in Trichy - Step by Step Guide',
+    'how-to-start-online-business-trichy',
+    'Complete guide for Trichy entrepreneurs looking to establish their online presence and grow their business digitally.',
+    E'Starting an online business in Trichy has never been more accessible. With the digital revolution reaching every corner of Tamil Nadu, local businesses now have unprecedented opportunities to expand their reach beyond traditional boundaries.\n\n**Step 1: Define Your Business Model**\nBefore diving into the digital world, clearly define what you\'re offering. Are you selling products, services, or both? Understanding your business model helps in choosing the right online platform and marketing strategy.\n\n**Step 2: Get Your Website Built**\nYour website is your digital storefront. For Trichy businesses, having a professionally designed website is crucial. Consider these options:\n• Landing Page (₹15,000) - Perfect for service providers\n• Business Website (₹30,000) - Ideal for established businesses\n• E-Commerce Store (₹50,000) - For product-based businesses\n\n**Step 3: Set Up Payment Integration**\nFor Trichy businesses, integrating Razorpay or PayPal makes accepting online payments seamless. Indian customers prefer UPI, cards, and net banking - ensure your payment gateway supports all these options.\n\n**Step 4: Optimize for Local SEO**\nMake sure customers in Trichy can find you! Include location-specific keywords like "web developer trichy," "Trichy business," and "Tiruchirappalli services" throughout your website.\n\n**Step 5: Leverage Social Media**\nCreate business profiles on Facebook and Instagram. These platforms are extremely popular in Trichy and help you connect with local customers directly.\n\n**Step 6: Start Marketing**\nUse Google My Business to appear in local searches. Run targeted Facebook ads for Trichy and surrounding areas. Collaborate with local influencers and businesses.\n\n**Why Work with a Local Web Developer?**\nPartnering with a local Trichy web developer means same timezone communication, understanding of local market needs, and the possibility of in-person meetings.\n\n**Get Started Today**\nReady to launch your online business in Trichy? Contact me for a free consultation and let\'s build your digital presence together.',
+    ARRAY['web developer trichy', 'online business trichy', 'website for business'],
+    '8 min read',
+    '2025-01-15',
+    true,
+    true,
+    NOW()
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Blog 2: 5 Affordable Website Features
-INSERT INTO blog (
-  id, title, slug, excerpt, content, keywords,
-  read_time, publish_date, is_featured, is_published,
-  display_order, created_at
+INSERT INTO blog_posts (
+    id, title, slug, excerpt, content, keywords,
+    read_time, published_at, is_featured, is_published,
+    created_at
 ) VALUES (
-  '750e8400-e29b-41d4-a716-446655440002'::uuid,
-  '5 Affordable Website Features Every Trichy Business Needs in 2025',
-  '5-affordable-website-features-trichy-business',
-  'Essential website features that convert visitors into customers, specifically designed for local Trichy businesses.',
-  E'In 2025, having just any website isn\'t enough - you need the right features to stand out and convert visitors into paying customers. Here are 5 essential features every Trichy business needs.\n\n**1. Mobile-First Design (Must-Have)**\nOver 80% of Indian users browse on mobile devices. Your website must look perfect and load fast on smartphones. This isn\'t optional anymore - Google penalizes non-mobile-friendly websites in search rankings.\n\n**2. Live Chat Integration (Cost: Minimal)**\nTrichy customers love instant communication! Add a live chat feature that allows instant communication. This feature alone can increase inquiries by 40-50%. It\'s easy to implement and incredibly effective.\n\n**3. Google Maps Integration (Cost: Free)**\nIf you have a physical location in Trichy, embed Google Maps. Customers need to find you easily. Add your exact address, photos, and business hours. This builds trust and drives foot traffic.\n\n**4. Contact Forms with Auto-Response**\nCapture leads with well-designed contact forms. Include fields for name, phone, email, and service selection. Auto-respond immediately with "We\'ll contact you within 24 hours" to build trust.\n\n**5. Payment Gateway Integration (Setup: Included in our packages)**\nAccept online payments directly on your website. Razorpay integration supports UPI, cards, net banking, and wallets. Essential for e-commerce but also great for service businesses taking advance bookings.\n\n**Pricing for Trichy Businesses**\n• Landing Page with all features: ₹15,000\n• Business Website (5-10 pages): ₹30,000\n• E-Commerce Store: ₹50,000\n\n**Why These Features Matter**\nThese aren\'t fancy additions - they\'re conversion tools. Each feature is designed to remove friction and make it easier for customers to choose your business.\n\n**Local Web Developer Advantage**\nWorking with a Trichy-based developer means faster turnaround, local market understanding, and ongoing support in the same timezone.\n\n**Ready to Upgrade Your Website?**\nLet\'s discuss which features your business needs. Book a free consultation today!',
-  ARRAY['affordable website', 'trichy business', 'website features'],
-  '6 min read',
-  '2025-01-10',
-  true,
-  true,
-  2,
-  NOW()
+    '750e8400-e29b-41d4-a716-446655440002'::uuid,
+    '5 Affordable Website Features Every Trichy Business Needs in 2025',
+    '5-affordable-website-features-trichy-business',
+    'Essential website features that convert visitors into customers, specifically designed for local Trichy businesses.',
+    E'In 2025, having just any website isn\'t enough - you need the right features to stand out and convert visitors into paying customers. Here are 5 essential features every Trichy business needs.\n\n**1. Mobile-First Design (Must-Have)**\nOver 80% of Indian users browse on mobile devices. Your website must look perfect and load fast on smartphones. This isn\'t optional anymore - Google penalizes non-mobile-friendly websites in search rankings.\n\n**2. Live Chat Integration (Cost: Minimal)**\nTrichy customers love instant communication! Add a live chat feature that allows instant communication. This feature alone can increase inquiries by 40-50%. It\'s easy to implement and incredibly effective.\n\n**3. Google Maps Integration (Cost: Free)**\nIf you have a physical location in Trichy, embed Google Maps. Customers need to find you easily. Add your exact address, photos, and business hours. This builds trust and drives foot traffic.\n\n**4. Contact Forms with Auto-Response**\nCapture leads with well-designed contact forms. Include fields for name, phone, email, and service selection. Auto-respond immediately with "We\'ll contact you within 24 hours" to build trust.\n\n**5. Payment Gateway Integration (Setup: Included in our packages)**\nAccept online payments directly on your website. Razorpay integration supports UPI, cards, net banking, and wallets. Essential for e-commerce but also great for service businesses taking advance bookings.\n\n**Pricing for Trichy Businesses**\n• Landing Page with all features: ₹15,000\n• Business Website (5-10 pages): ₹30,000\n• E-Commerce Store: ₹50,000\n\n**Why These Features Matter**\nThese aren\'t fancy additions - they\'re conversion tools. Each feature is designed to remove friction and make it easier for customers to choose your business.\n\n**Local Web Developer Advantage**\nWorking with a Trichy-based developer means faster turnaround, local market understanding, and ongoing support in the same timezone.\n\n**Ready to Upgrade Your Website?**\nLet\'s discuss which features your business needs. Book a free consultation today!',
+    ARRAY['affordable website', 'trichy business', 'website features'],
+    '6 min read',
+    '2025-01-10',
+    true,
+    true,
+    NOW()
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Blog 3: Restaurant Online Ordering
-INSERT INTO blog (
-  id, title, slug, excerpt, content, keywords,
-  read_time, publish_date, is_featured, is_published,
-  display_order, created_at
+INSERT INTO blog_posts (
+    id, title, slug, excerpt, content, keywords,
+    read_time, published_at, is_featured, is_published,
+    created_at
 ) VALUES (
-  '750e8400-e29b-41d4-a716-446655440003'::uuid,
-  'Why Your Restaurant in Trichy Needs Online Ordering in 2025',
-  'restaurant-online-ordering-trichy',
-  'How Trichy restaurants can increase revenue by 30% with online ordering systems and digital presence.',
-  E'The food industry in Trichy is booming, but restaurants without online ordering are leaving money on the table. Here\'s why your restaurant needs to go digital in 2025.\n\n**The Problem: Reliance on Third-Party Apps**\nSwiggy and Zomato charge 20-30% commission per order. For a ₹500 order, you lose ₹100-150 to commissions. Over a month, this adds up to lakhs of rupees in lost profit.\n\n**The Solution: Your Own Online Ordering System**\nBuild your own website with integrated online ordering. Accept payments via Razorpay. Zero commission. All profit stays with you.\n\n**Benefits of Direct Online Ordering:**\n• Keep 100% of profits (no 20-30% commission)\n• Build customer database for marketing\n• Control your brand experience\n• Accept advance orders\n• Reduce phone order errors\n\n**What Your Restaurant Website Needs:**\n1. Digital menu with photos and prices\n2. Online ordering system with cart\n3. Payment gateway (Razorpay/PayPal)\n4. Order tracking system\n5. Email/SMS notifications\n6. Google Maps location\n\n**Case Study: Local Trichy Restaurant**\nA biryani restaurant in Trichy launched their own ordering website. Results after 3 months:\n• 30% increase in orders\n• Saved ₹45,000 in third-party commissions\n• Built customer database of 500+ regular customers\n• Reduced phone order mistakes by 90%\n\n**Cost of Restaurant Website**\nComplete restaurant website with online ordering: ₹50,000 (one-time)\nCompared to: ₹15,000+ monthly in Swiggy/Zomato commissions.\n\n**Marketing Your Restaurant Online:**\n• Google My Business listing\n• Instagram food photos\n• Facebook ads targeting Trichy area\n• Email newsletter for offers\n• Customer reviews and ratings\n\n**ROI Calculation**\nInvestment: ₹50,000\nMonthly commission savings: ₹15,000\nBreak-even: 3-4 months\nAfter that: Pure profit increase!\n\n**Ready to Launch Your Restaurant Website?**\nLet\'s build your online ordering system. Contact me for a free consultation and custom quote.',
-  ARRAY['restaurant website trichy', 'online ordering', 'food business'],
-  '7 min read',
-  '2025-01-05',
-  false,
-  true,
-  3,
-  NOW()
+    '750e8400-e29b-41d4-a716-446655440003'::uuid,
+    'Why Your Restaurant in Trichy Needs Online Ordering in 2025',
+    'restaurant-online-ordering-trichy',
+    'How Trichy restaurants can increase revenue by 30% with online ordering systems and digital presence.',
+    E'The food industry in Trichy is booming, but restaurants without online ordering are leaving money on the table. Here\'s why your restaurant needs to go digital in 2025.\n\n**The Problem: Reliance on Third-Party Apps**\nSwiggy and Zomato charge 20-30% commission per order. For a ₹500 order, you lose ₹100-150 to commissions. Over a month, this adds up to lakhs of rupees in lost profit.\n\n**The Solution: Your Own Online Ordering System**\nBuild your own website with integrated online ordering. Accept payments via Razorpay. Zero commission. All profit stays with you.\n\n**Benefits of Direct Online Ordering:**\n• Keep 100% of profits (no 20-30% commission)\n• Build customer database for marketing\n• Control your brand experience\n• Accept advance orders\n• Reduce phone order errors\n\n**What Your Restaurant Website Needs:**\n1. Digital menu with photos and prices\n2. Online ordering system with cart\n3. Payment gateway (Razorpay/PayPal)\n4. Order tracking system\n5. Email/SMS notifications\n6. Google Maps location\n\n**Case Study: Local Trichy Restaurant**\nA biryani restaurant in Trichy launched their own ordering website. Results after 3 months:\n• 30% increase in orders\n• Saved ₹45,000 in third-party commissions\n• Built customer database of 500+ regular customers\n• Reduced phone order mistakes by 90%\n\n**Cost of Restaurant Website**\nComplete restaurant website with online ordering: ₹50,000 (one-time)\nCompared to: ₹15,000+ monthly in Swiggy/Zomato commissions.\n\n**Marketing Your Restaurant Online:**\n• Google My Business listing\n• Instagram food photos\n• Facebook ads targeting Trichy area\n• Email newsletter for offers\n• Customer reviews and ratings\n\n**ROI Calculation**\nInvestment: ₹50,000\nMonthly commission savings: ₹15,000\nBreak-even: 3-4 months\nAfter that: Pure profit increase!\n\n**Ready to Launch Your Restaurant Website?**\nLet\'s build your online ordering system. Contact me for a free consultation and custom quote.',
+    ARRAY['restaurant website trichy', 'online ordering', 'food business'],
+    '7 min read',
+    '2025-01-05',
+    false,
+    true,
+    NOW()
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Blog 4: Local SEO Tips
-INSERT INTO blog (
-  id, title, slug, excerpt, content, keywords,
-  read_time, publish_date, is_featured, is_published,
-  display_order, created_at
+INSERT INTO blog_posts (
+    id, title, slug, excerpt, content, keywords,
+    read_time, published_at, is_featured, is_published,
+    created_at
 ) VALUES (
-  '750e8400-e29b-41d4-a716-446655440004'::uuid,
-  'Local SEO Tips: How to Rank First on Google in Trichy',
-  'local-seo-tips-rank-google-trichy',
-  'Actionable SEO strategies to make your business appear first when Trichy customers search for your services.',
-  E'Want to appear first when someone in Trichy searches for your business? Local SEO is the answer. Here\'s your complete guide to ranking #1 on Google in Trichy.\n\n**What is Local SEO?**\nLocal SEO helps your business appear in "near me" searches and location-specific queries like "web developer trichy" or "restaurants near Srirangam".\n\n**1. Claim Your Google Business Profile**\nThis is FREE and the most important step:\n• Go to google.com/business\n• Add your business name, address, phone\n• Choose correct category\n• Add photos of your business\n• Verify your listing\n\n**2. Use Location Keywords Throughout Your Website**\nInclude these in your website:\n• "Best [your service] in Trichy"\n• "Trichy [your business type]"\n• "Tiruchirappalli [service]"\n• Your locality (Srirangam, Cantonment, etc.)\n\n**3. Get Reviews from Trichy Customers**\nGoogle loves reviews! Ask satisfied customers to leave 5-star reviews on your Google Business Profile. Even 10-15 reviews can significantly boost rankings.\n\n**4. Create Location-Specific Content**\nWrite blog posts about:\n• "How to [solve problem] in Trichy"\n• "[Your service] guide for Trichy businesses"\n• "Best [product] for Trichy weather/conditions"\n\n**5. Build Local Backlinks**\nGet your website linked from:\n• Trichy business directories\n• Local news websites\n• Chamber of commerce website\n• Local event websites\n• Partnership websites\n\n**6. Mobile Optimization is Critical**\n85% of local searches happen on mobile. Your website must:\n• Load in under 3 seconds\n• Look perfect on smartphones\n• Have click-to-call buttons\n• Show your location clearly\n\n**7. Use Schema Markup (Local Business)**\nAdd structured data to help Google understand your business:\n• Business name and address\n• Phone number\n• Opening hours\n• Service areas\n• Reviews and ratings\n\n**8. Create Social Media Presence**\nGoogle considers social signals:\n• Facebook Business Page with Trichy location\n• Instagram with location tags\n• Regular posts about your business\n• Engage with local customers\n\n**Quick Wins for Trichy Businesses:**\n• Add your email on every page\n• Include your address in footer\n• Create "Contact Us" page with map\n• Add live chat widget\n• Use local landmarks in descriptions\n\n**How Long to See Results?**\n• Google Business Profile: 1-2 weeks\n• Local content: 1-3 months\n• Backlinks and reviews: 2-4 months\nSEO is a marathon, not a sprint!\n\n**Need Help with Local SEO?**\nI build SEO-optimized websites for Trichy businesses with all best practices included. Let\'s get your business ranking #1!',
-  ARRAY['SEO trichy', 'local SEO', 'google ranking'],
-  '9 min read',
-  '2024-12-28',
-  false,
-  true,
-  4,
-  NOW()
+    '750e8400-e29b-41d4-a716-446655440004'::uuid,
+    'Local SEO Tips: How to Rank First on Google in Trichy',
+    'local-seo-tips-rank-google-trichy',
+    'Actionable SEO strategies to make your business appear first when Trichy customers search for your services.',
+    E'Want to appear first when someone in Trichy searches for your business? Local SEO is the answer. Here\'s your complete guide to ranking #1 on Google in Trichy.\n\n**What is Local SEO?**\nLocal SEO helps your business appear in "near me" searches and location-specific queries like "web developer trichy" or "restaurants near Srirangam".\n\n**1. Claim Your Google Business Profile**\nThis is FREE and the most important step:\n• Go to google.com/business\n• Add your business name, address, phone\n• Choose correct category\n• Add photos of your business\n• Verify your listing\n\n**2. Use Location Keywords Throughout Your Website**\nInclude these in your website:\n• "Best [your service] in Trichy"\n• "Trichy [your business type]"\n• "Tiruchirappalli [service]"\n• Your locality (Srirangam, Cantonment, etc.)\n\n**3. Get Reviews from Trichy Customers**\nGoogle loves reviews! Ask satisfied customers to leave 5-star reviews on your Google Business Profile. Even 10-15 reviews can significantly boost rankings.\n\n**4. Create Location-Specific Content**\nWrite blog posts about:\n• "How to [solve problem] in Trichy"\n• "[Your service] guide for Trichy businesses"\n• "Best [product] for Trichy weather/conditions"\n\n**5. Build Local Backlinks**\nGet your website linked from:\n• Trichy business directories\n• Local news websites\n• Chamber of commerce website\n• Local event websites\n• Partnership websites\n\n**6. Mobile Optimization is Critical**\n85% of local searches happen on mobile. Your website must:\n• Load in under 3 seconds\n• Look perfect on smartphones\n• Have click-to-call buttons\n• Show your location clearly\n\n**7. Use Schema Markup (Local Business)**\nAdd structured data to help Google understand your business:\n• Business name and address\n• Phone number\n• Opening hours\n• Service areas\n• Reviews and ratings\n\n**8. Create Social Media Presence**\nGoogle considers social signals:\n• Facebook Business Page with Trichy location\n• Instagram with location tags\n• Regular posts about your business\n• Engage with local customers\n\n**Quick Wins for Trichy Businesses:**\n• Add your email on every page\n• Include your address in footer\n• Create "Contact Us" page with map\n• Add live chat widget\n• Use local landmarks in descriptions\n\n**How Long to See Results?**\n• Google Business Profile: 1-2 weeks\n• Local content: 1-3 months\n• Backlinks and reviews: 2-4 months\nSEO is a marathon, not a sprint!\n\n**Need Help with Local SEO?**\nI build SEO-optimized websites for Trichy businesses with all best practices included. Let\'s get your business ranking #1!',
+    ARRAY['SEO trichy', 'local SEO', 'google ranking'],
+    '9 min read',
+    '2024-12-28',
+    false,
+    true,
+    NOW()
 ) ON CONFLICT (id) DO NOTHING;
 
 -- Blog 5: Website Cost Guide
-INSERT INTO blog (
-  id, title, slug, excerpt, content, keywords,
-  read_time, publish_date, is_featured, is_published,
-  display_order, created_at
+INSERT INTO blog_posts (
+    id, title, slug, excerpt, content, keywords,
+    read_time, published_at, is_featured, is_published,
+    created_at
 ) VALUES (
-  '750e8400-e29b-41d4-a716-446655440005'::uuid,
-  'How Much Does a Website Cost? Trichy Web Developer Pricing Guide',
-  'website-cost-trichy-pricing-guide',
-  'Transparent pricing breakdown for websites in Trichy - from landing pages to e-commerce stores.',
-  E'One of the most common questions I get: "How much does a website cost in Trichy?" Let me break down the pricing transparently so you know exactly what to expect.\n\n**Landing Page: ₹15,000**\nPerfect for:\n• Freelancers and consultants\n• Service providers\n• Portfolio websites\n• Lead generation\n\nWhat you get:\n• 1-2 page website\n• Mobile responsive design\n• Contact form\n• Live chat integration\n• Google Analytics\n• SSL certificate\n• 1 year hosting\n• Basic SEO\nTimeline: 1-2 weeks\n\n**Business Website: ₹30,000**\nPerfect for:\n• Small businesses\n• Professional services\n• Established companies\n• Multi-page presence\n\nWhat you get:\n• 5-10 pages\n• Custom design\n• CMS integration (easy updates)\n• Blog section\n• Advanced SEO\n• Analytics dashboard\n• Contact forms\n• Email setup\n• 1 year hosting\nTimeline: 3-4 weeks\n\n**E-Commerce Store: ₹50,000**\nPerfect for:\n• Online shops\n• Product businesses\n• Retail stores going digital\n\nWhat you get:\n• Product catalog (unlimited products)\n• Shopping cart\n• Payment gateway (Razorpay/PayPal)\n• Inventory management\n• Order tracking\n• Customer accounts\n• Admin dashboard\n• Email notifications\n• Mobile app-like experience\n• 1 year hosting\nTimeline: 4-6 weeks\n\n**Custom Development: ₹500-1000/hour**\nPerfect for:\n• Unique requirements\n• Complex features\n• API integrations\n• Custom business logic\n\nExamples:\n• Booking systems\n• CRM integration\n• Custom dashboards\n• Mobile apps\nTimeline: Flexible\n\n**What Affects Website Cost?**\nFactors that increase cost:\n• Number of pages\n• Custom features\n• Third-party integrations\n• Content creation\n• Advanced animations\n• Custom designs\n\n**What\'s Included in All Packages:**\n• Mobile-first responsive design\n• Fast loading speed (90+ PageSpeed score)\n• Live chat integration\n• SSL certificate (secure https)\n• Google Analytics\n• Contact forms\n• Social media integration\n• 1 year of technical support\n• Free minor updates for 6 months\n\n**What\'s NOT Included:**\n• Domain name (₹500-1000/year)\n• Content writing (can add for ₹5000)\n• Logo design (can add for ₹5000)\n• Professional photography\n• Digital marketing services\n\n**Ongoing Costs After Website Launch:**\n• Hosting: ₹3000-5000/year\n• Domain renewal: ₹500-1000/year\n• Maintenance: ₹5000-10000/year (optional)\n• Marketing: Variable\n\n**Why Choose Local Trichy Developer?**\n• Competitive pricing\n• Same timezone\n• Meet in person if needed\n• Understand local market\n• Ongoing support in Tamil if needed\n\n**Payment Terms:**\n• 30-50% advance to start\n• Balance on delivery\n• EMI options available for large projects\n\n**Money-Back Guarantee:**\nIf you\'re not satisfied with the website design, get 100% refund during the first revision. No questions asked.\n\n**Ready to Get Started?**\nContact me for a free consultation. Let\'s discuss your requirements and I\'ll give you an exact quote. No hidden fees, ever.',
-  ARRAY['website cost', 'web developer cost', 'trichy pricing'],
-  '6 min read',
-  '2024-12-20',
-  false,
-  true,
-  5,
-  NOW()
+    '750e8400-e29b-41d4-a716-446655440005'::uuid,
+    'How Much Does a Website Cost? Trichy Web Developer Pricing Guide',
+    'website-cost-trichy-pricing-guide',
+    'Transparent pricing breakdown for websites in Trichy - from landing pages to e-commerce stores.',
+    E'One of the most common questions I get: "How much does a website cost in Trichy?" Let me break down the pricing transparently so you know exactly what to expect.\n\n**Landing Page: ₹15,000**\nPerfect for:\n• Freelancers and consultants\n• Service providers\n• Portfolio websites\n• Lead generation\n\nWhat you get:\n• 1-2 page website\n• Mobile responsive design\n• Contact form\n• Live chat integration\n• Google Analytics\n• SSL certificate\n• 1 year hosting\n• Basic SEO\nTimeline: 1-2 weeks\n\n**Business Website: ₹30,000**\nPerfect for:\n• Small businesses\n• Professional services\n• Established companies\n• Multi-page presence\n\nWhat you get:\n• 5-10 pages\n• Custom design\n• CMS integration (easy updates)\n• Blog section\n• Advanced SEO\n• Analytics dashboard\n• Contact forms\n• Email setup\n• 1 year hosting\nTimeline: 3-4 weeks\n\n**E-Commerce Store: ₹50,000**\nPerfect for:\n• Online shops\n• Product businesses\n• Retail stores going digital\n\nWhat you get:\n• Product catalog (unlimited products)\n• Shopping cart\n• Payment gateway (Razorpay/PayPal)\n• Inventory management\n• Order tracking\n• Customer accounts\n• Admin dashboard\n• Email notifications\n• Mobile app-like experience\n• 1 year hosting\nTimeline: 4-6 weeks\n\n**Custom Development: ₹500-1000/hour**\nPerfect for:\n• Unique requirements\n• Complex features\n• API integrations\n• Custom business logic\n\nExamples:\n• Booking systems\n• CRM integration\n• Custom dashboards\n• Mobile apps\nTimeline: Flexible\n\n**What Affects Website Cost?**\nFactors that increase cost:\n• Number of pages\n• Custom features\n• Third-party integrations\n• Content creation\n• Advanced animations\n• Custom designs\n\n**What\'s Included in All Packages:**\n• Mobile-first responsive design\n• Fast loading speed (90+ PageSpeed score)\n• Live chat integration\n• SSL certificate (secure https)\n• Google Analytics\n• Contact forms\n• Social media integration\n• 1 year of technical support\n• Free minor updates for 6 months\n\n**What\'s NOT Included:**\n• Domain name (₹500-1000/year)\n• Content writing (can add for ₹5000)\n• Logo design (can add for ₹5000)\n• Professional photography\n• Digital marketing services\n\n**Ongoing Costs After Website Launch:**\n• Hosting: ₹3000-5000/year\n• Domain renewal: ₹500-1000/year\n• Maintenance: ₹5000-10000/year (optional)\n• Marketing: Variable\n\n**Why Choose Local Trichy Developer?**\n• Competitive pricing\n• Same timezone\n• Meet in person if needed\n• Understand local market\n• Ongoing support in Tamil if needed\n\n**Payment Terms:**\n• 30-50% advance to start\n• Balance on delivery\n• EMI options available for large projects\n\n**Money-Back Guarantee:**\nIf you\'re not satisfied with the website design, get 100% refund during the first revision. No questions asked.',
+    ARRAY['website cost', 'web developer cost', 'trichy pricing'],
+    '6 min read',
+    '2024-12-20',
+    false,
+    true,
+    NOW()
 ) ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================
--- FAQs MIGRATION
+-- FAQs MIGRATION (UNCHANGED)
 -- =====================================================
 
-INSERT INTO faq (id, question, answer, category, display_order, is_published, created_at) VALUES
-  ('850e8400-e29b-41d4-a716-446655440001'::uuid,
-   'How long does it take to build a website?',
-   'Timeline depends on the type of website: Landing Pages take 1-2 weeks, Business Websites take 3-4 weeks, and E-Commerce Stores take 4-6 weeks. Custom projects are flexible. I work efficiently to deliver quality work on time.',
-   'general',
-   1,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440002'::uuid,
-   'Do you provide hosting and domain?',
-   'Yes! All my packages include 1 year of hosting. Domain registration costs ₹500-1000/year extra. I can handle the complete setup for you, or you can purchase separately if you prefer.',
-   'general',
-   2,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440003'::uuid,
-   'Will my website work on mobile phones?',
-   'Absolutely! All websites I build are mobile-first and fully responsive. They work perfectly on smartphones, tablets, and desktops. Over 80% of users browse on mobile, so this is a top priority.',
-   'technical',
-   3,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440004'::uuid,
-   'Can I update the website myself after it''s built?',
-   'Yes! Business Website and E-Commerce packages include CMS (Content Management System) that allows you to easily update text, images, and products without any coding knowledge. I''ll provide training on how to use it.',
-   'technical',
-   4,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440005'::uuid,
-   'What payment methods do you accept?',
-   'I accept bank transfers, UPI, Google Pay, PhonePe, and Razorpay. Payment terms: 30-50% advance to start the project, balance on delivery. EMI options available for projects above ₹40,000.',
-   'pricing',
-   5,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440006'::uuid,
-   'Do you offer support after the website is launched?',
-   'Yes! All packages include 1 year of technical support. Free minor updates for 6 months. For major changes or ongoing maintenance, we can discuss a monthly retainer starting from ₹3,000/month.',
-   'support',
-   6,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440007'::uuid,
-   'Will my website appear on Google?',
-   'Yes! All websites include basic SEO (Search Engine Optimization). I submit your site to Google, add meta tags, and optimize for speed. For advanced SEO and ranking, we offer additional SEO services starting from ₹10,000.',
-   'seo',
-   7,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440008'::uuid,
-   'Can you integrate payment gateway for online payments?',
-   'Absolutely! I integrate Razorpay or PayPal which support UPI, credit/debit cards, net banking, and wallets. Setup is included in E-Commerce packages. For other packages, integration costs ₹5,000 extra.',
-   'technical',
-   8,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440009'::uuid,
-   'What if I''m not satisfied with the design?',
-   'Your satisfaction is guaranteed! You get 2-3 free revisions during development. If you''re still not happy during the first revision, I offer a 100% money-back guarantee. No questions asked.',
-   'general',
-   9,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440010'::uuid,
-   'Do you only work with Trichy businesses?',
-   'While I''m based in Trichy, I work with businesses across Tamil Nadu and all of India. Local Trichy clients get the benefit of in-person meetings, but I work remotely with clients nationwide.',
-   'general',
-   10,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440011'::uuid,
-   'Can you help with content and images for my website?',
-   'Yes! Content writing services: ₹5,000 extra. I can write professional copy for all pages. For images, you can provide your own, or I can use high-quality stock photos. Professional photography can be arranged separately.',
-   'general',
-   11,
-   true,
-   NOW()),
-  
-  ('850e8400-e29b-41d4-a716-446655440012'::uuid,
-   'What''s the difference between your packages?',
-   'Landing Page (₹15k): 1-2 pages, perfect for freelancers. Business Website (₹30k): 5-10 pages with blog, ideal for companies. E-Commerce (₹50k): Full online store with payment and inventory. Custom: For unique requirements.',
-   'pricing',
-   12,
-   true,
-   NOW())
+INSERT INTO faqs (id, question, answer, category, display_order, is_published, created_at) VALUES
+    ('850e8400-e29b-41d4-a716-446655440001'::uuid,
+    'How long does it take to build a website?',
+    'Timeline depends on the type of website: Landing Pages take 1-2 weeks, Business Websites take 3-4 weeks, and E-Commerce Stores take 4-6 weeks. Custom projects are flexible. I work efficiently to deliver quality work on time.',
+    'general',
+    1,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440002'::uuid,
+    'Do you provide hosting and domain?',
+    'Yes! All my packages include 1 year of hosting. Domain registration costs ₹500-1000/year extra. I can handle the complete setup for you, or you can purchase separately if you prefer.',
+    'general',
+    2,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440003'::uuid,
+    'Will my website work on mobile phones?',
+    'Absolutely! All websites I build are mobile-first and fully responsive. They work perfectly on smartphones, tablets, and desktops. Over 80% of users browse on mobile, so this is a top priority.',
+    'technical',
+    3,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440004'::uuid,
+    'Can I update the website myself after it''s built?',
+    'Yes! Business Website and E-Commerce packages include CMS (Content Management System) that allows you to easily update text, images, and products without any coding knowledge. I''ll provide training on how to use it.',
+    'technical',
+    4,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440005'::uuid,
+    'What payment methods do you accept?',
+    'I accept bank transfers, UPI, Google Pay, PhonePe, and Razorpay. Payment terms: 30-50% advance to start the project, balance on delivery. EMI options available for projects above ₹40,000.',
+    'pricing',
+    5,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440006'::uuid,
+    'Do you offer support after the website is launched?',
+    'Yes! All packages include 1 year of technical support. Free minor updates for 6 months. For major changes or ongoing maintenance, we can discuss a monthly retainer starting from ₹3,000/month.',
+    'support',
+    6,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440007'::uuid,
+    'Will my website appear on Google?',
+    'Yes! All websites include basic SEO (Search Engine Optimization). I submit your site to Google, add meta tags, and optimize for speed. For advanced SEO and ranking, we offer additional SEO services starting from ₹10,000.',
+    'seo',
+    7,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440008'::uuid,
+    'Can you integrate payment gateway for online payments?',
+    'Absolutely! I integrate Razorpay or PayPal which support UPI, credit/debit cards, net banking, and wallets. Setup is included in E-Commerce packages. For other packages, integration costs ₹5,000 extra.',
+    'technical',
+    8,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440009'::uuid,
+    'What if I''m not satisfied with the design?',
+    'Your satisfaction is guaranteed! You get 2-3 free revisions during development. If you''re still not happy during the first revision, I offer a 100% money-back guarantee. No questions asked.',
+    'general',
+    9,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440010'::uuid,
+    'Do you only work with Trichy businesses?',
+    'While I''m based in Trichy, I work with businesses across Tamil Nadu and all of India. Local Trichy clients get the benefit of in-person meetings, but I work remotely with clients nationwide.',
+    'general',
+    10,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440011'::uuid,
+    'Can you help with content and images for my website?',
+    'Yes! Content writing services: ₹5,000 extra. I can write professional copy for all pages. For images, you can provide your own, or I can use high-quality stock photos. Professional photography can be arranged separately.',
+    'general',
+    11,
+    true,
+    NOW()),
+    
+    ('850e8400-e29b-41d4-a716-446655440012'::uuid,
+    'What''s the difference between your packages?',
+    'Landing Page (₹15k): 1-2 pages, perfect for freelancers. Business Website (₹30k): 5-10 pages with blog, ideal for companies. E-Commerce (₹50k): Full online store with payment and inventory. Custom: For unique requirements.',
+    'pricing',
+    12,
+    true,
+    NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Log migration
 INSERT INTO activity_log (action_type, action_data, user_email)
 VALUES (
-  'data_migration',
-  '{"type": "blog_faq_migration", "description": "Migrated 5 blog posts and 12 FAQs to database"}'::jsonb,
-  'system'
+    'data_migration',
+    '{"type": "blog_posts_faqs_migration", "description": "Migrated 5 blog posts and 12 FAQs to database"}'::jsonb,
+    'system'
 ) ON CONFLICT DO NOTHING;
